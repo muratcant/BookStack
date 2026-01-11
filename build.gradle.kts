@@ -88,15 +88,23 @@ sourceSets {
 }
 
 val integrationTestImplementation by configurations.getting {
+    extendsFrom(configurations.implementation.get())
     extendsFrom(configurations.testImplementation.get())
 }
 val integrationTestRuntimeOnly by configurations.getting {
+    extendsFrom(configurations.runtimeOnly.get())
     extendsFrom(configurations.testRuntimeOnly.get())
 }
 
 dependencies {
-    "integrationTestImplementation"("org.springframework.boot:spring-boot-starter-test")
-    "integrationTestImplementation"("org.springframework.boot:spring-boot-test-autoconfigure")
+    // Integration Test - Spring Boot 4.0 modüler yapı
+    "integrationTestImplementation"("org.springframework.boot:spring-boot-starter-webmvc-test")
+    "integrationTestImplementation"("org.springframework.boot:spring-boot-starter-test") {
+        exclude(group = "org.mockito", module = "mockito-core")
+    }
+    "integrationTestImplementation"("com.fasterxml.jackson.module:jackson-module-kotlin")
+    "integrationTestImplementation"("org.jetbrains.kotlin:kotlin-test-junit5")
+    "integrationTestRuntimeOnly"("org.junit.platform:junit-platform-launcher")
 }
 
 // Unit Tests (default test task) - No DB required

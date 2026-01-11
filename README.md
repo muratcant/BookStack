@@ -15,12 +15,14 @@ BookStack, kitapçı ve okuma kütüphanesi işlevlerini birleştiren bir backen
 |------------|---------|
 | Kotlin | 2.2.21 |
 | Spring Boot | 4.0.1 |
-| Spring Data JPA | - |
+| Spring Data JPA | 4.0.1 |
 | PostgreSQL | 16 |
 | springdoc-openapi | 2.8.0 |
 | Kotest | 5.9.1 |
 | MockK | 1.13.13 |
+| JaCoCo | 0.8.12 |
 | Docker Compose | - |
+| Gradle | 9.x |
 
 ## 🚀 Getting Started
 
@@ -43,45 +45,66 @@ docker compose -f docker-compose.dev.yml up -d
 ```
 
 3. **Access the API:**
+- Root (redirects to Swagger): http://localhost:8080/
 - Swagger UI: http://localhost:8080/swagger-ui.html
 - API Docs: http://localhost:8080/api-docs
 - Health: http://localhost:8080/actuator/health
 
 ## 🧪 Testing
 
-### Unit Tests
+### Test Framework
+- **Unit Tests**: Kotest + MockK (Given-When-Then style)
+- **Integration Tests**: JUnit 5 + MockMvc + Docker Compose PostgreSQL
+- **Coverage**: JaCoCo (combined unit + integration)
+
+### Run Tests
+
+**Unit Tests:**
 ```bash
 ./gradlew test
 ```
 
-### Integration Tests
+**Integration Tests:**
 ```bash
 ./gradlew integrationTest
 ```
+> Note: Integration tests automatically start/stop Docker Compose PostgreSQL
 
-### All Tests with Coverage
+**All Tests:**
 ```bash
-./gradlew check jacocoTestReport
+./gradlew check
 ```
 
-Coverage report: `build/reports/jacoco/test/html/index.html`
+**Generate Coverage Report:**
+```bash
+./gradlew jacocoFullReport
+```
+
+**Coverage Reports:**
+- **Full (Unit + Integration)**: `build/reports/jacoco/full/html/index.html`
+- **Integration Test**: `build/reports/jacoco/integrationTest/html/index.html`
+- **Unit Test**: `build/reports/jacoco/test/html/index.html`
 
 ## 📁 Project Structure
 
 ```
 src/main/kotlin/org/muratcant/bookstack/
 ├── shared/                     # Cross-cutting concerns
-│   ├── config/                 # OpenApiConfig, JpaConfig
+│   ├── config/                 # OpenApiConfig, WebConfig
 │   ├── exception/              # GlobalExceptionHandler, custom exceptions
 │   └── domain/                 # BaseEntity
-├── features/
-│   ├── member/                 # Member management
+├── features/                   # Feature modules
+│   ├── member/                 # Member management ✅
 │   ├── book/                   # Book catalog
 │   ├── copy/                   # Physical copies
 │   ├── visit/                  # Check-in/check-out
 │   ├── loan/                   # Borrowing logic
 │   ├── reservation/            # FIFO holds
 │   └── penalty/                # Late fees
+└── BookStackApplication.kt     # Main application class
+
+src/test/kotlin/                # Unit tests (Kotest + MockK)
+src/integrationTest/kotlin/     # Integration tests (JUnit 5 + Docker Compose)
 ```
 
 ## 🏗 Architecture
@@ -129,8 +152,32 @@ bookstack:
 docker compose -f docker-compose.dev.yml up -d
 ```
 
-### Full Stack
+### Full Stack (App + DB)
 ```bash
-docker compose up -d
+docker compose up -d --build
 ```
 
+### View Logs
+```bash
+docker compose logs -f app
+```
+
+### Stop
+```bash
+docker compose down
+```
+
+## 🔄 CI/CD
+
+- **GitHub Actions**: Automated testing and coverage reporting
+- **Codecov**: Code coverage tracking
+- **Docker**: Multi-stage builds for production-ready images
+
+## 📊 Current Status
+
+- ✅ **Milestone 0**: Infrastructure setup completed
+- ✅ **Milestone 1**: Member CRUD completed
+  - Register, Get, List, Update, Delete endpoints
+  - Unit tests (Kotest + MockK)
+  - Integration tests (MockMvc + PostgreSQL)
+- 🚧 **Milestone 2**: Member Status Management (next)
