@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: BookStack
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bookstack
+    username: bookstack
+    password: bookstack123
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+bookstack:
+  loan:
+    default-duration-days: 14
+    max-extensions: 2
+    extension-days: 7
+  penalty:
+    daily-fee: 1.00
+    blocking-threshold: 10.00
+  reservation:
+    pickup-window-days: 3
+

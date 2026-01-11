@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: bookstack-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: bookstack
+      POSTGRES_USER: bookstack
+      POSTGRES_PASSWORD: bookstack123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bookstack -d bookstack"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+

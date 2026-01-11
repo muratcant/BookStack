@@ -1,0 +1,30 @@
+# Build artifacts
+build/
+.gradle/
+out/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Git
+.git/
+.gitignore
+
+# Docker
+docker-compose*.yml
+Dockerfile
+
+# Docs
+*.md
+LICENSE
+
+# Test
+src/test/
+src/integrationTest/
+
+# Misc
+.cursorrules
+DEVELOPMENT_PLAN.md
+

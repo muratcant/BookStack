@@ -1,0 +1,47 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bookstack-app
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/bookstack
+      SPRING_DATASOURCE_USERNAME: bookstack
+      SPRING_DATASOURCE_PASSWORD: bookstack123
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - bookstack-network
+
+  db:
+    image: postgres:16-alpine
+    container_name: bookstack-db
+    environment:
+      POSTGRES_DB: bookstack
+      POSTGRES_USER: bookstack
+      POSTGRES_PASSWORD: bookstack123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bookstack -d bookstack"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - bookstack-network
+
+networks:
+  bookstack-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+
