@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import org.muratcant.bookstack.features.member.activate.ActivateMemberHandler
+import org.muratcant.bookstack.features.member.activate.ActivateMemberResponse
 import org.muratcant.bookstack.features.member.delete.DeleteMemberHandler
 import org.muratcant.bookstack.features.member.get.GetMemberHandler
 import org.muratcant.bookstack.features.member.get.GetMemberResponse
@@ -12,6 +14,8 @@ import org.muratcant.bookstack.features.member.list.ListMembersResponse
 import org.muratcant.bookstack.features.member.register.RegisterMemberHandler
 import org.muratcant.bookstack.features.member.register.RegisterMemberRequest
 import org.muratcant.bookstack.features.member.register.RegisterMemberResponse
+import org.muratcant.bookstack.features.member.suspend.SuspendMemberHandler
+import org.muratcant.bookstack.features.member.suspend.SuspendMemberResponse
 import org.muratcant.bookstack.features.member.update.UpdateMemberHandler
 import org.muratcant.bookstack.features.member.update.UpdateMemberRequest
 import org.muratcant.bookstack.features.member.update.UpdateMemberResponse
@@ -28,7 +32,9 @@ class MemberController(
     private val getMemberHandler: GetMemberHandler,
     private val listMembersHandler: ListMembersHandler,
     private val updateMemberHandler: UpdateMemberHandler,
-    private val deleteMemberHandler: DeleteMemberHandler
+    private val deleteMemberHandler: DeleteMemberHandler,
+    private val suspendMemberHandler: SuspendMemberHandler,
+    private val activateMemberHandler: ActivateMemberHandler
 ) {
     
     @PostMapping
@@ -79,6 +85,26 @@ class MemberController(
     fun deleteMember(@PathVariable id: UUID): ResponseEntity<Void> {
         deleteMemberHandler.handle(id)
         return ResponseEntity.noContent().build()
+    }
+
+    @PatchMapping("/{id}/suspend")
+    @Operation(summary = "Suspend member")
+    @ApiResponse(responseCode = "200", description = "Member successfully suspended")
+    @ApiResponse(responseCode = "400", description = "Invalid status transition")
+    @ApiResponse(responseCode = "404", description = "Member not found")
+    fun suspendMember(@PathVariable id: UUID): ResponseEntity<SuspendMemberResponse> {
+        val response = suspendMemberHandler.handle(id)
+        return ResponseEntity.ok(response)
+    }
+
+    @PatchMapping("/{id}/activate")
+    @Operation(summary = "Activate member")
+    @ApiResponse(responseCode = "200", description = "Member successfully activated")
+    @ApiResponse(responseCode = "400", description = "Invalid status transition")
+    @ApiResponse(responseCode = "404", description = "Member not found")
+    fun activateMember(@PathVariable id: UUID): ResponseEntity<ActivateMemberResponse> {
+        val response = activateMemberHandler.handle(id)
+        return ResponseEntity.ok(response)
     }
 }
 

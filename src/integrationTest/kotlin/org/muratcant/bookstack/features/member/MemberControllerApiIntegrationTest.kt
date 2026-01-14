@@ -3,30 +3,43 @@ package org.muratcant.bookstack.features.member
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.muratcant.bookstack.BaseIntegrationTest
+import org.muratcant.bookstack.features.loan.domain.LoanRepository
 import org.muratcant.bookstack.features.member.domain.Member
 import org.muratcant.bookstack.features.member.domain.MemberRepository
 import org.muratcant.bookstack.features.member.domain.MemberStatus
 import org.muratcant.bookstack.features.member.register.RegisterMemberRequest
+import org.muratcant.bookstack.features.visit.domain.VisitRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
+@Transactional
 class MemberControllerApiIntegrationTest : BaseIntegrationTest() {
 
     @Autowired
     private lateinit var memberRepository: MemberRepository
 
+    @Autowired
+    private lateinit var visitRepository: VisitRepository
+
+    @Autowired
+    private lateinit var loanRepository: LoanRepository
+
     @BeforeEach
     fun setup() {
+        loanRepository.deleteAll()
+        visitRepository.deleteAll()
         memberRepository.deleteAll()
     }
 
@@ -315,6 +328,156 @@ class MemberControllerApiIntegrationTest : BaseIntegrationTest() {
     fun `Given non-existing member When DELETE api members id Then should return 404`() {
         // When & Then
         mockMvc.perform(delete("/api/members/${UUID.randomUUID()}"))
+            .andExpect(status().isNotFound)
+    }
+
+    // ==================== PATCH /api/members/{id}/suspend ====================
+
+    @Test
+    fun `Given active member When PATCH api members id suspend Then should return 200 and change status`() {
+        // Given
+        val member = memberRepository.save(
+            Member(
+                membershipNumber = "MBR-SUSPEND01",
+                firstName = "John",
+                lastName = "Doe",
+                email = "suspend@example.com",
+                status = MemberStatus.ACTIVE
+            )
+        )
+
+        // When & Then
+        mockMvc.perform(patch("/api/members/${member.id}/suspend"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.id").value(member.id.toString()))
+            .andExpect(jsonPath("$.status").value("SUSPENDED"))
+
+        // Verify DB
+        val suspended = memberRepository.findById(member.id).orElse(null)
+        assertNotNull(suspended)
+        assertEquals(MemberStatus.SUSPENDED, suspended.status)
+    }
+
+    @Test
+    fun `Given suspended member When PATCH api members id suspend Then should return 400`() {
+        // Given
+        val member = memberRepository.save(
+            Member(
+                membershipNumber = "MBR-ALREADY01",
+                firstName = "Already",
+                lastName = "Suspended",
+                email = "already.suspended@example.com",
+                status = MemberStatus.SUSPENDED
+            )
+        )
+
+        // When & Then
+        mockMvc.perform(patch("/api/members/${member.id}/suspend"))
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error").value("Member is already suspended"))
+    }
+
+    @Test
+    fun `Given expired member When PATCH api members id suspend Then should return 400`() {
+        // Given
+        val member = memberRepository.save(
+            Member(
+                membershipNumber = "MBR-EXPIRED01",
+                firstName = "Expired",
+                lastName = "Member",
+                email = "expired@example.com",
+                status = MemberStatus.EXPIRED
+            )
+        )
+
+        // When & Then
+        mockMvc.perform(patch("/api/members/${member.id}/suspend"))
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error").value("Cannot suspend an expired member. Please activate first."))
+    }
+
+    @Test
+    fun `Given non-existing member When PATCH api members id suspend Then should return 404`() {
+        // When & Then
+        mockMvc.perform(patch("/api/members/${UUID.randomUUID()}/suspend"))
+            .andExpect(status().isNotFound)
+    }
+
+    // ==================== PATCH /api/members/{id}/activate ====================
+
+    @Test
+    fun `Given suspended member When PATCH api members id activate Then should return 200 and change status`() {
+        // Given
+        val member = memberRepository.save(
+            Member(
+                membershipNumber = "MBR-ACTIVATE1",
+                firstName = "Suspended",
+                lastName = "Member",
+                email = "suspended.activate@example.com",
+                status = MemberStatus.SUSPENDED
+            )
+        )
+
+        // When & Then
+        mockMvc.perform(patch("/api/members/${member.id}/activate"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.id").value(member.id.toString()))
+            .andExpect(jsonPath("$.status").value("ACTIVE"))
+
+        // Verify DB
+        val activated = memberRepository.findById(member.id).orElse(null)
+        assertNotNull(activated)
+        assertEquals(MemberStatus.ACTIVE, activated.status)
+    }
+
+    @Test
+    fun `Given expired member When PATCH api members id activate Then should return 200 and change status`() {
+        // Given
+        val member = memberRepository.save(
+            Member(
+                membershipNumber = "MBR-ACTIVATE2",
+                firstName = "Expired",
+                lastName = "Member",
+                email = "expired.activate@example.com",
+                status = MemberStatus.EXPIRED
+            )
+        )
+
+        // When & Then
+        mockMvc.perform(patch("/api/members/${member.id}/activate"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.id").value(member.id.toString()))
+            .andExpect(jsonPath("$.status").value("ACTIVE"))
+
+        // Verify DB
+        val activated = memberRepository.findById(member.id).orElse(null)
+        assertNotNull(activated)
+        assertEquals(MemberStatus.ACTIVE, activated.status)
+    }
+
+    @Test
+    fun `Given active member When PATCH api members id activate Then should return 400`() {
+        // Given
+        val member = memberRepository.save(
+            Member(
+                membershipNumber = "MBR-ALRACTIVE",
+                firstName = "Already",
+                lastName = "Active",
+                email = "already.active@example.com",
+                status = MemberStatus.ACTIVE
+            )
+        )
+
+        // When & Then
+        mockMvc.perform(patch("/api/members/${member.id}/activate"))
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error").value("Member is already active"))
+    }
+
+    @Test
+    fun `Given non-existing member When PATCH api members id activate Then should return 404`() {
+        // When & Then
+        mockMvc.perform(patch("/api/members/${UUID.randomUUID()}/activate"))
             .andExpect(status().isNotFound)
     }
 }

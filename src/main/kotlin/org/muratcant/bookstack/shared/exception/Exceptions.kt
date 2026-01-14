@@ -24,3 +24,5 @@ class ReservationNotFoundException(message: String) : ResourceNotFoundException(
 
 class ReservationAlreadyExistsException(message: String) : BusinessRuleException(message)
 
+class InvalidStatusTransitionException(message: String) : BusinessRuleException(message)
+

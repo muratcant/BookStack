@@ -95,6 +95,8 @@ src/main/kotlin/org/muratcant/bookstack/
 │   └── domain/                 # BaseEntity
 ├── features/                   # Feature modules
 │   ├── member/                 # Member management ✅
+│   ├── book/                   # Book catalog ✅
+│   ├── bookcopy/               # Physical book copies ✅
 │   ├── book/                   # Book catalog
 │   ├── copy/                   # Physical copies
 │   ├── visit/                  # Check-in/check-out
@@ -180,4 +182,16 @@ docker compose down
   - Register, Get, List, Update, Delete endpoints
   - Unit tests (Kotest + MockK)
   - Integration tests (MockMvc + PostgreSQL)
-- 🚧 **Milestone 2**: Member Status Management (next)
+- ✅ **Milestone 2**: Member Status Management completed
+  - Suspend, Activate endpoints
+  - Status transition validation (ACTIVE↔SUSPENDED, EXPIRED→ACTIVE)
+- ✅ **Milestone 3**: Book Catalog Domain completed
+  - Add, Get, List, Search, Update, Delete endpoints
+  - ISBN uniqueness validation
+  - Title/ISBN search functionality
+- ✅ **Milestone 4**: BookCopy Domain completed
+  - Add, Get, List, ListByBook, Update, Delete endpoints
+  - Barcode uniqueness validation
+  - UsageType (READING_ROOM_ONLY, BORROWABLE, BOTH)
+  - CopyStatus (AVAILABLE, LOANED, ON_HOLD, DAMAGED, LOST)
+- 🚧 **Milestone 5**: Visit Domain (next)
