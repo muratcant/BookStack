@@ -16,8 +16,15 @@ import org.muratcant.bookstack.features.loan.domain.LoanRepository
 import org.muratcant.bookstack.features.loan.domain.LoanStatus
 import org.muratcant.bookstack.features.member.domain.MemberRepository
 import org.muratcant.bookstack.features.member.test.MemberBuilder
+import org.muratcant.bookstack.features.penalty.config.PenaltyProperties
+import org.muratcant.bookstack.features.penalty.domain.PenaltyRepository
+import org.muratcant.bookstack.features.reservation.domain.ReservationRepository
+import org.muratcant.bookstack.features.reservation.domain.ReservationStatus
+import org.muratcant.bookstack.features.reservation.process.ProcessReservationService
+import org.muratcant.bookstack.features.reservation.test.ReservationBuilder
 import org.muratcant.bookstack.features.visit.domain.VisitRepository
 import org.muratcant.bookstack.shared.exception.*
+import java.math.BigDecimal
 import java.util.Optional
 import java.util.UUID
 
@@ -27,18 +34,26 @@ class BorrowCopyHandlerTest : FunSpec({
     val memberRepository = mockk<MemberRepository>()
     val bookCopyRepository = mockk<BookCopyRepository>()
     val visitRepository = mockk<VisitRepository>()
+    val penaltyRepository = mockk<PenaltyRepository>()
+    val reservationRepository = mockk<ReservationRepository>()
+    val processReservationService = mockk<ProcessReservationService>()
     val loanProperties = LoanProperties(defaultDurationDays = 14, maxExtensions = 2, extensionDays = 7)
+    val penaltyProperties = PenaltyProperties(dailyFee = BigDecimal("1.00"), blockingThreshold = BigDecimal("10.00"))
     
     val handler = BorrowCopyHandler(
         loanRepository,
         memberRepository,
         bookCopyRepository,
         visitRepository,
-        loanProperties
+        penaltyRepository,
+        reservationRepository,
+        processReservationService,
+        loanProperties,
+        penaltyProperties
     )
 
     beforeTest {
-        clearMocks(loanRepository, memberRepository, bookCopyRepository, visitRepository)
+        clearMocks(loanRepository, memberRepository, bookCopyRepository, visitRepository, penaltyRepository, reservationRepository, processReservationService)
     }
 
     test("Given active checked-in member and available copy When borrow Then should create loan") {
@@ -52,9 +67,11 @@ class BorrowCopyHandlerTest : FunSpec({
         every { memberRepository.findById(memberId) } returns Optional.of(member)
         every { bookCopyRepository.findById(copyId) } returns Optional.of(copy)
         every { visitRepository.existsByMemberIdAndCheckOutTimeIsNull(memberId) } returns true
+        every { penaltyRepository.sumUnpaidAmountByMemberId(memberId) } returns BigDecimal.ZERO
         every { loanRepository.countByMemberIdAndStatus(memberId, LoanStatus.ACTIVE) } returns 0
         every { loanRepository.save(any()) } answers { firstArg() }
         every { bookCopyRepository.save(any()) } answers { firstArg() }
+        every { processReservationService.fulfillReservation(copyId) } returns null
 
         // When
         val response = handler.handle(request)
@@ -109,6 +126,28 @@ class BorrowCopyHandlerTest : FunSpec({
         verify(exactly = 0) { loanRepository.save(any()) }
     }
 
+    test("Given member with unpaid penalties above threshold When borrow Then should throw UnpaidPenaltiesException") {
+        // Given
+        val memberId = UUID.randomUUID()
+        val copyId = UUID.randomUUID()
+        val member = MemberBuilder.anActiveMember(id = memberId)
+        val copy = BookCopyBuilder.anAvailableCopy(id = copyId)
+        val request = BorrowCopyRequest(memberId = memberId, copyId = copyId)
+
+        every { memberRepository.findById(memberId) } returns Optional.of(member)
+        every { bookCopyRepository.findById(copyId) } returns Optional.of(copy)
+        every { visitRepository.existsByMemberIdAndCheckOutTimeIsNull(memberId) } returns true
+        every { penaltyRepository.sumUnpaidAmountByMemberId(memberId) } returns BigDecimal("15.00")
+
+        // When & Then
+        val exception = shouldThrow<UnpaidPenaltiesException> {
+            handler.handle(request)
+        }
+
+        exception.message shouldBe "Member has unpaid penalties (15.00) above blocking threshold (10.00)"
+        verify(exactly = 0) { loanRepository.save(any()) }
+    }
+
     test("Given loaned copy When borrow Then should throw CopyNotAvailableException") {
         // Given
         val memberId = UUID.randomUUID()
@@ -120,6 +159,7 @@ class BorrowCopyHandlerTest : FunSpec({
         every { memberRepository.findById(memberId) } returns Optional.of(member)
         every { bookCopyRepository.findById(copyId) } returns Optional.of(copy)
         every { visitRepository.existsByMemberIdAndCheckOutTimeIsNull(memberId) } returns true
+        every { penaltyRepository.sumUnpaidAmountByMemberId(memberId) } returns BigDecimal.ZERO
 
         // When & Then
         val exception = shouldThrow<CopyNotAvailableException> {
@@ -141,6 +181,7 @@ class BorrowCopyHandlerTest : FunSpec({
         every { memberRepository.findById(memberId) } returns Optional.of(member)
         every { bookCopyRepository.findById(copyId) } returns Optional.of(copy)
         every { visitRepository.existsByMemberIdAndCheckOutTimeIsNull(memberId) } returns true
+        every { penaltyRepository.sumUnpaidAmountByMemberId(memberId) } returns BigDecimal.ZERO
 
         // When & Then
         val exception = shouldThrow<CopyNotBorrowableException> {
@@ -162,6 +203,7 @@ class BorrowCopyHandlerTest : FunSpec({
         every { memberRepository.findById(memberId) } returns Optional.of(member)
         every { bookCopyRepository.findById(copyId) } returns Optional.of(copy)
         every { visitRepository.existsByMemberIdAndCheckOutTimeIsNull(memberId) } returns true
+        every { penaltyRepository.sumUnpaidAmountByMemberId(memberId) } returns BigDecimal.ZERO
         every { loanRepository.countByMemberIdAndStatus(memberId, LoanStatus.ACTIVE) } returns 5
 
         // When & Then
@@ -220,14 +262,70 @@ class BorrowCopyHandlerTest : FunSpec({
         every { memberRepository.findById(memberId) } returns Optional.of(member)
         every { bookCopyRepository.findById(copyId) } returns Optional.of(copy)
         every { visitRepository.existsByMemberIdAndCheckOutTimeIsNull(memberId) } returns true
+        every { penaltyRepository.sumUnpaidAmountByMemberId(memberId) } returns BigDecimal.ZERO
         every { loanRepository.countByMemberIdAndStatus(memberId, LoanStatus.ACTIVE) } returns 0
         every { loanRepository.save(any()) } answers { firstArg() }
         every { bookCopyRepository.save(any()) } answers { firstArg() }
+        every { processReservationService.fulfillReservation(copyId) } returns null
 
         // When
         handler.handle(request)
 
         // Then
         copy.status shouldBe CopyStatus.LOANED
+    }
+
+    test("Given ON_HOLD copy and reservation holder When borrow Then should allow and fulfill reservation") {
+        // Given
+        val memberId = UUID.randomUUID()
+        val copyId = UUID.randomUUID()
+        val member = MemberBuilder.anActiveMember(id = memberId)
+        val copy = BookCopyBuilder.anOnHoldCopy(id = copyId)
+        val reservation = ReservationBuilder.aReadyForPickupReservation(member = member, copy = copy)
+        val request = BorrowCopyRequest(memberId = memberId, copyId = copyId)
+
+        every { memberRepository.findById(memberId) } returns Optional.of(member)
+        every { bookCopyRepository.findById(copyId) } returns Optional.of(copy)
+        every { visitRepository.existsByMemberIdAndCheckOutTimeIsNull(memberId) } returns true
+        every { penaltyRepository.sumUnpaidAmountByMemberId(memberId) } returns BigDecimal.ZERO
+        every { reservationRepository.findByCopyIdAndStatus(copyId, ReservationStatus.READY_FOR_PICKUP) } returns reservation
+        every { loanRepository.countByMemberIdAndStatus(memberId, LoanStatus.ACTIVE) } returns 0
+        every { loanRepository.save(any()) } answers { firstArg() }
+        every { bookCopyRepository.save(any()) } answers { firstArg() }
+        every { processReservationService.fulfillReservation(copyId) } returns reservation
+
+        // When
+        val response = handler.handle(request)
+
+        // Then
+        response.id shouldNotBe null
+        copy.status shouldBe CopyStatus.LOANED
+        verify(exactly = 1) { processReservationService.fulfillReservation(copyId) }
+    }
+
+    test("Given ON_HOLD copy and not reservation holder When borrow Then should throw CopyNotAvailableException") {
+        // Given
+        val memberId = UUID.randomUUID()
+        val otherMemberId = UUID.randomUUID()
+        val copyId = UUID.randomUUID()
+        val member = MemberBuilder.anActiveMember(id = memberId)
+        val otherMember = MemberBuilder.anActiveMember(id = otherMemberId)
+        val copy = BookCopyBuilder.anOnHoldCopy(id = copyId)
+        val reservation = ReservationBuilder.aReadyForPickupReservation(member = otherMember, copy = copy)
+        val request = BorrowCopyRequest(memberId = memberId, copyId = copyId)
+
+        every { memberRepository.findById(memberId) } returns Optional.of(member)
+        every { bookCopyRepository.findById(copyId) } returns Optional.of(copy)
+        every { visitRepository.existsByMemberIdAndCheckOutTimeIsNull(memberId) } returns true
+        every { penaltyRepository.sumUnpaidAmountByMemberId(memberId) } returns BigDecimal.ZERO
+        every { reservationRepository.findByCopyIdAndStatus(copyId, ReservationStatus.READY_FOR_PICKUP) } returns reservation
+
+        // When & Then
+        val exception = shouldThrow<CopyNotAvailableException> {
+            handler.handle(request)
+        }
+
+        exception.message shouldBe "Copy is on hold for another member's reservation"
+        verify(exactly = 0) { loanRepository.save(any()) }
     }
 })

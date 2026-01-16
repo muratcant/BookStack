@@ -18,7 +18,7 @@ class Loan(
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "copy_id", nullable = false)
-    val copy: BookCopy,
+    val bookCopy: BookCopy,
 
     @Column(nullable = false, updatable = false)
     val borrowedAt: LocalDateTime = LocalDateTime.now(),
@@ -47,4 +47,7 @@ class Loan(
     fun markAsOverdue() {
         status = LoanStatus.OVERDUE
     }
+
+    fun isActive(): Boolean = status == LoanStatus.ACTIVE
+
 }

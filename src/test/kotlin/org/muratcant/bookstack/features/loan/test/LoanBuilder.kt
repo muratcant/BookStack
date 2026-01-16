@@ -22,7 +22,7 @@ object LoanBuilder {
     ): Loan = Loan(
         id = id,
         member = member,
-        copy = copy,
+        bookCopy = copy,
         borrowedAt = borrowedAt,
         dueDate = dueDate,
         returnedAt = returnedAt,

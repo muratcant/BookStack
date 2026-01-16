@@ -32,10 +32,10 @@ class GetActiveLoansHandler(
 
     private fun Loan.toActiveItem() = ActiveLoanItem(
         id = id,
-        copyId = copy.id,
-        bookTitle = copy.book.title,
-        bookIsbn = copy.book.isbn,
-        barcode = copy.barcode,
+        copyId = bookCopy.id,
+        bookTitle = bookCopy.book.title,
+        bookIsbn = bookCopy.book.isbn,
+        barcode = bookCopy.barcode,
         borrowedAt = borrowedAt,
         dueDate = dueDate,
         isOverdue = isOverdue()
