@@ -180,6 +180,18 @@ tasks.jacocoTestReport {
         html.required.set(true)
         csv.required.set(false)
     }
+    
+    classDirectories.setFrom(
+        files(sourceSets["main"].output.classesDirs).asFileTree.matching {
+            exclude(
+                "**/BookStackApplication*",
+                "**/shared/**",
+                "**/config/**",
+                "**/*Request*",
+                "**/*Response*"
+            )
+        }
+    )
 }
 
 // Integration test coverage report
@@ -196,6 +208,18 @@ tasks.register<JacocoReport>("jacocoIntegrationTestReport") {
         html.outputLocation.set(layout.buildDirectory.dir("reports/jacoco/integrationTest/html"))
         xml.outputLocation.set(layout.buildDirectory.file("reports/jacoco/integrationTest/jacocoIntegrationTestReport.xml"))
     }
+    
+    classDirectories.setFrom(
+        files(sourceSets["main"].output.classesDirs).asFileTree.matching {
+            exclude(
+                "**/BookStackApplication*",
+                "**/shared/**",
+                "**/config/**",
+                "**/*Request*",
+                "**/*Response*"
+            )
+        }
+    )
 }
 
 // Combined coverage report (unit + integration)
@@ -220,6 +244,7 @@ tasks.register<JacocoReport>("jacocoFullReport") {
         files(sourceSets["main"].output.classesDirs).asFileTree.matching {
             exclude(
                 "**/BookStackApplication*",
+                "**/shared/**",
                 "**/config/**",
                 "**/*Request*",
                 "**/*Response*"

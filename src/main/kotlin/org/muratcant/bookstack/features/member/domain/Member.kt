@@ -42,5 +42,14 @@ class Member(
     fun onUpdate() {
         updatedAt = LocalDateTime.now()
     }
+
+    fun isActive() = status == MemberStatus.ACTIVE
+
+    fun update(firstName: String, lastName: String, email: String, phone: String?) {
+        this.firstName = firstName
+        this.lastName = lastName
+        this.email = email
+        this.phone = phone
+    }
 }
 

@@ -20,11 +20,12 @@ class CheckInHandler(
         val member = memberRepository.findById(request.memberId)
             .orElseThrow { ResourceNotFoundException("Member not found: ${request.memberId}") }
 
-        if (member.status != MemberStatus.ACTIVE) {
+        if (!member.isActive()) {
             throw MemberNotActiveException("Member is not active: ${member.status}")
         }
 
-        if (visitRepository.existsByMemberIdAndCheckOutTimeIsNull(request.memberId)) {
+        val isAlreadyCheckIn= visitRepository.existsByMemberIdAndCheckOutTimeIsNull(request.memberId)
+        if (isAlreadyCheckIn) {
             throw MemberAlreadyCheckedInException("Member is already checked in")
         }
 

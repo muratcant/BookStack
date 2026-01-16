@@ -12,31 +12,31 @@ import java.util.UUID
 class UpdateMemberHandler(
     private val memberRepository: MemberRepository
 ) {
-    
+
     @Transactional
     fun handle(id: UUID, request: UpdateMemberRequest): UpdateMemberResponse {
         val member = memberRepository.findById(id)
             .orElseThrow { ResourceNotFoundException("Member not found with id: $id") }
-        
+
         validateEmailUniqueness(id, request.email)
-        
-        member.firstName = request.firstName
-        member.lastName = request.lastName
-        member.email = request.email
-        member.phone = request.phone
-        
-        val updatedMember = memberRepository.save(member)
-        
-        return updatedMember.toResponse()
+
+        member.update(
+            request.firstName,
+            request.lastName,
+            request.email,
+            request.phone
+        )
+
+        return memberRepository.save(member).toResponse()
     }
-    
+
     private fun validateEmailUniqueness(memberId: UUID, email: String) {
         val existingMember = memberRepository.findByEmail(email)
         if (existingMember != null && existingMember.id != memberId) {
             throw DuplicateResourceException("Email already exists: $email")
         }
     }
-    
+
     private fun Member.toResponse() = UpdateMemberResponse(
         id = id,
         membershipNumber = membershipNumber,

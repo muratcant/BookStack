@@ -9,7 +9,7 @@ import java.util.UUID
 data class AddBookCopyRequest(
     @field:NotNull(message = "Book ID is required")
     @Schema(description = "ID of the book this copy belongs to", example = "123e4567-e89b-12d3-a456-426614174000")
-    val bookId: UUID,
+    var bookId: UUID,
 
     @field:NotBlank(message = "Barcode is required")
     @Schema(description = "Unique barcode for this copy", example = "BC-001-2024")

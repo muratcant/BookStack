@@ -62,10 +62,10 @@ class ListBooksHandlerTest : FunSpec({
 
         // Then
         response.books shouldHaveSize 1
-        response.books[0].isbn shouldBe "978-0-13-235088-4"
-        response.books[0].title shouldBe "Clean Code"
-        response.books[0].authors shouldBe listOf("Robert C. Martin")
-        response.books[0].publishedYear shouldBe 2008
+        response.books.first().isbn shouldBe "978-0-13-235088-4"
+        response.books.first().title shouldBe "Clean Code"
+        response.books.first().authors shouldBe listOf("Robert C. Martin")
+        response.books.first().publishedYear shouldBe 2008
     }
 })
 

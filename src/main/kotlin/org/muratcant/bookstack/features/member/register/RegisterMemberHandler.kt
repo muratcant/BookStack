@@ -12,11 +12,11 @@ import java.util.UUID
 class RegisterMemberHandler(
     private val memberRepository: MemberRepository
 ) {
-    
+
     @Transactional
     fun handle(request: RegisterMemberRequest): RegisterMemberResponse {
         validateEmailUniqueness(request.email)
-        
+
         val member = Member(
             membershipNumber = generateMembershipNumber(),
             firstName = request.firstName,
@@ -25,21 +25,19 @@ class RegisterMemberHandler(
             phone = request.phone,
             status = MemberStatus.ACTIVE
         )
-        
-        val savedMember = memberRepository.save(member)
-        
-        return savedMember.toResponse()
+
+        return memberRepository.save(member).toResponse()
     }
-    
+
     private fun validateEmailUniqueness(email: String) {
         if (memberRepository.existsByEmail(email)) {
             throw DuplicateResourceException("Email already exists: $email")
         }
     }
-    
+
     private fun generateMembershipNumber(): String =
         "MBR-${UUID.randomUUID().toString().take(8).uppercase()}"
-    
+
     private fun Member.toResponse() = RegisterMemberResponse(
         id = id,
         membershipNumber = membershipNumber,

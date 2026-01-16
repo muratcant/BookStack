@@ -73,5 +73,17 @@ object BookCopyBuilder {
         usageType = UsageType.BORROWABLE,
         status = CopyStatus.AVAILABLE
     )
+
+    fun anOnHoldCopy(
+        id: UUID = UUID.randomUUID(),
+        book: Book = BookBuilder.aBook(),
+        barcode: String = "BC-${UUID.randomUUID().toString().take(8).uppercase()}"
+    ) = aBookCopy(
+        id = id,
+        book = book,
+        barcode = barcode,
+        usageType = UsageType.BOTH,
+        status = CopyStatus.ON_HOLD
+    )
 }
 

@@ -24,7 +24,6 @@ class AddBookHandler(
         )
 
         val savedBook = bookRepository.save(book)
-
         return savedBook.toResponse()
     }
 

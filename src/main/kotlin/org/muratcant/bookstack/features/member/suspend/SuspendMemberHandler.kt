@@ -22,9 +22,7 @@ class SuspendMemberHandler(
 
         member.status = MemberStatus.SUSPENDED
 
-        val savedMember = memberRepository.save(member)
-
-        return savedMember.toResponse()
+        return memberRepository.save(member).toResponse()
     }
 
     private fun validateStatusTransition(member: Member) {

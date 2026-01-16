@@ -36,5 +36,9 @@ class BookCopy(
     fun onUpdate() {
         updatedAt = LocalDateTime.now()
     }
+
+    fun setAvailable() {
+        status = CopyStatus.AVAILABLE
+    }
 }
 
