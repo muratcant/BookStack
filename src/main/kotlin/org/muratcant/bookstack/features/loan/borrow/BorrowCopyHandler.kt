@@ -8,7 +8,11 @@ import org.muratcant.bookstack.features.loan.domain.Loan
 import org.muratcant.bookstack.features.loan.domain.LoanRepository
 import org.muratcant.bookstack.features.loan.domain.LoanStatus
 import org.muratcant.bookstack.features.member.domain.MemberRepository
-import org.muratcant.bookstack.features.member.domain.MemberStatus
+import org.muratcant.bookstack.features.penalty.config.PenaltyProperties
+import org.muratcant.bookstack.features.penalty.domain.PenaltyRepository
+import org.muratcant.bookstack.features.reservation.domain.ReservationRepository
+import org.muratcant.bookstack.features.reservation.domain.ReservationStatus
+import org.muratcant.bookstack.features.reservation.process.ProcessReservationService
 import org.muratcant.bookstack.features.visit.domain.VisitRepository
 import org.muratcant.bookstack.shared.exception.*
 import org.springframework.stereotype.Service
@@ -21,7 +25,11 @@ class BorrowCopyHandler(
     private val memberRepository: MemberRepository,
     private val bookCopyRepository: BookCopyRepository,
     private val visitRepository: VisitRepository,
-    private val loanProperties: LoanProperties
+    private val penaltyRepository: PenaltyRepository,
+    private val reservationRepository: ReservationRepository,
+    private val processReservationService: ProcessReservationService,
+    private val loanProperties: LoanProperties,
+    private val penaltyProperties: PenaltyProperties
 ) {
     @Transactional
     fun handle(request: BorrowCopyRequest): BorrowCopyResponse {
@@ -32,7 +40,7 @@ class BorrowCopyHandler(
             .orElseThrow { ResourceNotFoundException("Book copy not found: ${request.copyId}") }
 
         // Business Rule: Member must be ACTIVE
-        if (member.status != MemberStatus.ACTIVE) {
+        if (!member.isActive()) {
             throw MemberNotActiveException("Member is not active: ${member.status}")
         }
 
@@ -41,8 +49,22 @@ class BorrowCopyHandler(
             throw MemberNotCheckedInException("Member must be checked in to borrow a copy")
         }
 
-        // Business Rule: Copy must be AVAILABLE
-        if (copy.status != CopyStatus.AVAILABLE) {
+        // Business Rule: Member must not have unpaid penalties above threshold
+        val unpaidAmount = penaltyRepository.sumUnpaidAmountByMemberId(request.memberId)
+        if (unpaidAmount >= penaltyProperties.blockingThreshold) {
+            throw UnpaidPenaltiesException("Member has unpaid penalties ($unpaidAmount) above blocking threshold (${penaltyProperties.blockingThreshold})")
+        }
+
+        // Business Rule: Copy must be AVAILABLE or ON_HOLD (for reservation holder)
+        if (copy.status == CopyStatus.ON_HOLD) {
+            // Check if this member is the reservation holder
+            val reservation = reservationRepository.findByCopyIdAndStatus(
+                request.copyId, ReservationStatus.READY_FOR_PICKUP
+            )
+            if (reservation == null || reservation.member.id != request.memberId) {
+                throw CopyNotAvailableException("Copy is on hold for another member's reservation")
+            }
+        } else if (copy.status != CopyStatus.AVAILABLE) {
             throw CopyNotAvailableException("Copy is not available: ${copy.status}")
         }
 
@@ -61,7 +83,7 @@ class BorrowCopyHandler(
         val dueDate = LocalDateTime.now().plusDays(loanProperties.defaultDurationDays.toLong())
         val loan = Loan(
             member = member,
-            copy = copy,
+            bookCopy = copy,
             dueDate = dueDate
         )
 
@@ -71,6 +93,9 @@ class BorrowCopyHandler(
         val savedLoan = loanRepository.save(loan)
         bookCopyRepository.save(copy)
 
+        // Fulfill reservation if this was an ON_HOLD copy
+        processReservationService.fulfillReservation(request.copyId)
+
         return savedLoan.toResponse()
     }
 
@@ -78,9 +103,9 @@ class BorrowCopyHandler(
         id = id,
         memberId = member.id,
         memberName = "${member.firstName} ${member.lastName}",
-        copyId = copy.id,
-        bookTitle = copy.book.title,
-        barcode = copy.barcode,
+        copyId = bookCopy.id,
+        bookTitle = bookCopy.book.title,
+        barcode = bookCopy.barcode,
         borrowedAt = borrowedAt,
         dueDate = dueDate,
         status = status.name

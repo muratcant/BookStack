@@ -1,6 +1,7 @@
 package org.muratcant.bookstack.features.loan.returnloan
 
 import io.swagger.v3.oas.annotations.media.Schema
+import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -39,5 +40,17 @@ data class ReturnCopyResponse(
     val isOverdue: Boolean,
 
     @Schema(description = "Gecikme gün sayısı (varsa)")
-    val daysOverdue: Int?
+    val daysOverdue: Int?,
+
+    @Schema(description = "Oluşturulan ceza ID'si (varsa)")
+    val penaltyId: UUID? = null,
+
+    @Schema(description = "Ceza tutarı (varsa)")
+    val penaltyAmount: BigDecimal? = null,
+
+    @Schema(description = "Kopya rezervasyon sahibine mi atandı?")
+    val reservationAssigned: Boolean = false,
+
+    @Schema(description = "Atanan rezervasyon ID'si (varsa)")
+    val reservationId: UUID? = null
 )
