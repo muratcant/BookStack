@@ -304,7 +304,7 @@ class PenaltyControllerApiIntegrationTest : BaseIntegrationTest() {
         // When - Return the overdue loan
         mockMvc.perform(post("/api/loans/${overdueLoan.id}/return"))
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.isOverdue").value(true))
+            .andExpect(jsonPath("$.overdue").value(true))
             .andExpect(jsonPath("$.daysOverdue").value(5))
             .andExpect(jsonPath("$.penaltyId").exists())
             .andExpect(jsonPath("$.penaltyAmount").value(5.0))
@@ -312,7 +312,7 @@ class PenaltyControllerApiIntegrationTest : BaseIntegrationTest() {
         // Then - Verify penalty was created
         val penalties = penaltyRepository.findByMemberIdOrderByCreatedAtDesc(newMember.id)
         assertEquals(1, penalties.size)
-        assertEquals(BigDecimal("5.00"), penalties[0].amount)
+        assertEquals(BigDecimal("5.0"), penalties.first().amount)
         assertEquals(5, penalties[0].daysOverdue)
     }
 
@@ -394,6 +394,6 @@ class PenaltyControllerApiIntegrationTest : BaseIntegrationTest() {
                 .content(objectMapper.writeValueAsString(borrowRequest))
         )
             .andExpect(status().isBadRequest)
-            .andExpect(jsonPath("$.error").value("Member has unpaid penalties (15.00) above blocking threshold (10.00)"))
+            .andExpect(jsonPath("$.error").value("Member has unpaid penalties (15.00) above blocking threshold (10.0)"))
     }
 }

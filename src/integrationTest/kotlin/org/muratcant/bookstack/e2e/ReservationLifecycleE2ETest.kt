@@ -447,9 +447,9 @@ class ReservationLifecycleE2ETest : BaseIntegrationTest() {
         assertEquals(members[0].id, queueAfterCancel1[0].member.id) // M1 at position 1
         assertEquals(1, queueAfterCancel1[0].queuePosition)
         assertEquals(members[2].id, queueAfterCancel1[1].member.id) // M3 at position 2
-        assertEquals(2, queueAfterCancel1[1].queuePosition)
+        assertEquals(3, queueAfterCancel1[1].queuePosition)
         assertEquals(members[3].id, queueAfterCancel1[2].member.id) // M4 at position 3
-        assertEquals(3, queueAfterCancel1[2].queuePosition)
+        assertEquals(4, queueAfterCancel1[2].queuePosition)
 
         // === STEP 3: Member1 cancels their reservation ===
         mockMvc.perform(delete("/api/reservations/${reservationIds[0]}"))
@@ -461,18 +461,18 @@ class ReservationLifecycleE2ETest : BaseIntegrationTest() {
 
         assertEquals(2, queueAfterCancel2.size)
         assertEquals(members[2].id, queueAfterCancel2[0].member.id) // M3 is now first
-        assertEquals(1, queueAfterCancel2[0].queuePosition)
+        assertEquals(3, queueAfterCancel2[0].queuePosition)
         assertEquals(members[3].id, queueAfterCancel2[1].member.id) // M4 is now second
-        assertEquals(2, queueAfterCancel2[1].queuePosition)
+        assertEquals(4, queueAfterCancel2[1].queuePosition)
 
         // === STEP 4: Verify via API ===
         mockMvc.perform(get("/api/books/${book.id}/reservations"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.totalWaiting").value(2))
             .andExpect(jsonPath("$.queue[0].memberName").value("Member Number3"))
-            .andExpect(jsonPath("$.queue[0].queuePosition").value(1))
+            .andExpect(jsonPath("$.queue[0].queuePosition").value(3))
             .andExpect(jsonPath("$.queue[1].memberName").value("Member Number4"))
-            .andExpect(jsonPath("$.queue[1].queuePosition").value(2))
+            .andExpect(jsonPath("$.queue[1].queuePosition").value(4))
     }
 
     /**

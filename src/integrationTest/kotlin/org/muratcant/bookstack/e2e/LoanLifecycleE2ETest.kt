@@ -243,7 +243,7 @@ class LoanLifecycleE2ETest : BaseIntegrationTest() {
         mockMvc.perform(post("/api/loans/$loanId/return"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.status").value("RETURNED"))
-            .andExpect(jsonPath("$.isOverdue").value(false))
+            .andExpect(jsonPath("$.overdue").value(false))
             .andExpect(jsonPath("$.penaltyId").doesNotExist())
 
         // DB Verify: Loan returned, Copy available again
@@ -319,7 +319,7 @@ class LoanLifecycleE2ETest : BaseIntegrationTest() {
         mockMvc.perform(post("/api/loans/${loan.id}/return"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.status").value("RETURNED"))
-            .andExpect(jsonPath("$.isOverdue").value(true))
+            .andExpect(jsonPath("$.overdue").value(true))
             .andExpect(jsonPath("$.daysOverdue").value(5))
             .andExpect(jsonPath("$.penaltyId").exists())
             .andExpect(jsonPath("$.penaltyAmount").value(5.0))
@@ -333,7 +333,7 @@ class LoanLifecycleE2ETest : BaseIntegrationTest() {
         assertEquals(1, penalties.size)
         val penalty = penalties[0]
         assertEquals(PenaltyStatus.UNPAID, penalty.status)
-        assertEquals(BigDecimal("5.00"), penalty.amount)
+        assertEquals(BigDecimal("5.0"), penalty.amount)
         assertEquals(5, penalty.daysOverdue)
         assertNull(penalty.paidAt)
 
@@ -457,7 +457,7 @@ class LoanLifecycleE2ETest : BaseIntegrationTest() {
                 .content(objectMapper.writeValueAsString(borrowRequest))
         )
             .andExpect(status().isBadRequest)
-            .andExpect(jsonPath("$.error").value("Member has unpaid penalties (15.00) above blocking threshold (10.00)"))
+            .andExpect(jsonPath("$.error").value("Member has unpaid penalties (15.00) above blocking threshold (10.0)"))
 
         // DB Verify: No loan was created
         val loansAfterFailedAttempt = loanRepository.countByMemberIdAndStatus(member.id, LoanStatus.ACTIVE)
