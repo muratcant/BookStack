@@ -9,6 +9,4 @@ interface LoanRepository : JpaRepository<Loan, UUID> {
     fun findByMemberIdAndStatusOrderByBorrowedAtDesc(memberId: UUID, status: LoanStatus): List<Loan>
     fun findByMemberIdOrderByBorrowedAtDesc(memberId: UUID): List<Loan>
     fun countByMemberIdAndStatus(memberId: UUID, status: LoanStatus): Long
-    fun existsByCopyIdAndStatus(copyId: UUID, status: LoanStatus): Boolean
-    fun findByCopyIdAndStatus(copyId: UUID, status: LoanStatus): Loan?
-}
+   }
