@@ -5,20 +5,20 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 data class VisitHistoryResponse(
-    @Schema(description = "Ziyaret listesi")
+    @Schema(description = "List of visits")
     val visits: List<VisitHistoryItem>
 )
 
 data class VisitHistoryItem(
-    @Schema(description = "Ziyaret ID'si")
+    @Schema(description = "Visit ID")
     val id: UUID,
 
-    @Schema(description = "Check-in zamanı")
+    @Schema(description = "Check-in time")
     val checkInTime: LocalDateTime,
 
-    @Schema(description = "Check-out zamanı (null ise hala içeride)")
+    @Schema(description = "Check-out time (null if still inside)")
     val checkOutTime: LocalDateTime?,
 
-    @Schema(description = "Ziyaret aktif mi?")
+    @Schema(description = "Whether the visit is active")
     val isActive: Boolean
 )

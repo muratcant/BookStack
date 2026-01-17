@@ -27,7 +27,6 @@ class CancelReservationHandler(
         val bookId = reservation.book.id
         val cancelledPosition = reservation.queuePosition
 
-        // If reservation had a copy assigned (READY_FOR_PICKUP), release it
         reservation.copy?.let { copy ->
             copy.status = CopyStatus.AVAILABLE
             bookCopyRepository.save(copy)
@@ -36,7 +35,6 @@ class CancelReservationHandler(
         reservation.cancel()
         reservationRepository.save(reservation)
 
-        // Decrement queue positions for waiting reservations after cancelled one
         if (reservation.status == ReservationStatus.CANCELLED) {
             reservationRepository.decrementQueuePositionsAfter(bookId, cancelledPosition)
         }

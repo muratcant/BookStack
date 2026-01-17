@@ -6,51 +6,51 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 data class ReturnCopyResponse(
-    @Schema(description = "Ödünç ID'si")
+    @Schema(description = "Loan ID")
     val id: UUID,
 
-    @Schema(description = "Üye ID'si")
+    @Schema(description = "Member ID")
     val memberId: UUID,
 
-    @Schema(description = "Üye adı soyadı")
+    @Schema(description = "Member full name")
     val memberName: String,
 
-    @Schema(description = "Kopya ID'si")
+    @Schema(description = "Copy ID")
     val copyId: UUID,
 
-    @Schema(description = "Kitap başlığı")
+    @Schema(description = "Book title")
     val bookTitle: String,
 
-    @Schema(description = "Kopya barkodu")
+    @Schema(description = "Copy barcode")
     val barcode: String,
 
-    @Schema(description = "Ödünç alınma zamanı")
+    @Schema(description = "Borrowed at timestamp")
     val borrowedAt: LocalDateTime,
 
-    @Schema(description = "İade tarihi")
+    @Schema(description = "Due date")
     val dueDate: LocalDateTime,
 
-    @Schema(description = "İade edilme zamanı")
+    @Schema(description = "Returned at timestamp")
     val returnedAt: LocalDateTime,
 
-    @Schema(description = "Ödünç durumu")
+    @Schema(description = "Loan status")
     val status: String,
 
-    @Schema(description = "Gecikme var mı?")
+    @Schema(description = "Whether the return was overdue")
     val isOverdue: Boolean,
 
-    @Schema(description = "Gecikme gün sayısı (varsa)")
+    @Schema(description = "Number of days overdue (if any)")
     val daysOverdue: Int?,
 
-    @Schema(description = "Oluşturulan ceza ID'si (varsa)")
+    @Schema(description = "Created penalty ID (if any)")
     val penaltyId: UUID? = null,
 
-    @Schema(description = "Ceza tutarı (varsa)")
+    @Schema(description = "Penalty amount (if any)")
     val penaltyAmount: BigDecimal? = null,
 
-    @Schema(description = "Kopya rezervasyon sahibine mi atandı?")
+    @Schema(description = "Whether the copy was assigned to a reservation holder")
     val reservationAssigned: Boolean = false,
 
-    @Schema(description = "Atanan rezervasyon ID'si (varsa)")
+    @Schema(description = "Assigned reservation ID (if any)")
     val reservationId: UUID? = null
 )

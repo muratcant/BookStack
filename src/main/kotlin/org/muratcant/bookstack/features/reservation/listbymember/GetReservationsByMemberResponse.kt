@@ -5,32 +5,32 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 data class GetReservationsByMemberResponse(
-    @Schema(description = "Rezervasyon listesi")
+    @Schema(description = "List of reservations")
     val reservations: List<MemberReservationItem>
 )
 
 data class MemberReservationItem(
-    @Schema(description = "Rezervasyon ID'si")
+    @Schema(description = "Reservation ID")
     val id: UUID,
 
-    @Schema(description = "Kitap ID'si")
+    @Schema(description = "Book ID")
     val bookId: UUID,
 
-    @Schema(description = "Kitap başlığı")
+    @Schema(description = "Book title")
     val bookTitle: String,
 
-    @Schema(description = "Kitap ISBN")
+    @Schema(description = "Book ISBN")
     val isbn: String,
 
-    @Schema(description = "Sıra numarası")
+    @Schema(description = "Queue position")
     val queuePosition: Int,
 
-    @Schema(description = "Rezervasyon durumu")
+    @Schema(description = "Reservation status")
     val status: String,
 
-    @Schema(description = "Son teslim alma zamanı (varsa)")
+    @Schema(description = "Pickup expiration timestamp (if any)")
     val expiresAt: LocalDateTime?,
 
-    @Schema(description = "Oluşturulma zamanı")
+    @Schema(description = "Created at timestamp")
     val createdAt: LocalDateTime
 )

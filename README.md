@@ -1,4 +1,4 @@
-# 📚 BookStack
+# BookStack
 
 [![CI](https://github.com/muratcant/BookStack/actions/workflows/ci.yml/badge.svg)](https://github.com/muratcant/BookStack/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/muratcant/BookStack/graph/badge.svg?token=NPTT1UYWC7)](https://codecov.io/gh/muratcant/BookStack)
@@ -7,9 +7,9 @@
 
 > Hybrid Bookstore & Reading Library Backend System
 
-BookStack, kitapçı ve okuma kütüphanesi işlevlerini birleştiren bir backend sistemidir. **Vertical Slice Architecture** kullanılarak Spring Boot + Kotlin ile geliştirilmektedir.
+BookStack is a backend system that combines bookstore and reading library functionalities. It is developed with Spring Boot + Kotlin using **Vertical Slice Architecture**.
 
-## 🛠 Tech Stack
+## Tech Stack
 
 | Technology | Version |
 |------------|---------|
@@ -24,7 +24,7 @@ BookStack, kitapçı ve okuma kütüphanesi işlevlerini birleştiren bir backen
 | Docker Compose | - |
 | Gradle | 9.x |
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -50,7 +50,7 @@ docker compose -f docker-compose.dev.yml up -d
 - API Docs: http://localhost:8080/api-docs
 - Health: http://localhost:8080/actuator/health
 
-## 🧪 Testing
+## Testing
 
 ### Test Framework
 - **Unit Tests**: Kotest + MockK (Given-When-Then style)
@@ -101,7 +101,7 @@ docker compose -f docker-compose.dev.yml up -d
 
 > Note: `shared` package is excluded from coverage reports (infrastructure code)
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 src/main/kotlin/org/muratcant/bookstack/
@@ -125,7 +125,7 @@ src/integrationTest/kotlin/     # Integration & E2E tests
     └── e2e/                    # End-to-End system tests
 ```
 
-## 🏗 Architecture
+## Architecture
 
 BookStack uses **Vertical Slice Architecture (VSA)**:
 
@@ -134,9 +134,13 @@ BookStack uses **Vertical Slice Architecture (VSA)**:
 - Shared concerns are in the `shared` package
 - No traditional layered architecture (no service/repository layers spanning features)
 
-## 📋 API Endpoints
+## API Documentation
 
-### MemberController (`/api/members`)
+For detailed API documentation with request/response examples, see [API_DOCS.md](API_DOCS.md).
+
+### API Endpoints Overview
+
+#### MemberController (`/api/members`)
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `POST` | `/api/members` | Register new member |
@@ -147,7 +151,7 @@ BookStack uses **Vertical Slice Architecture (VSA)**:
 | `PATCH` | `/api/members/{id}/suspend` | Suspend member |
 | `PATCH` | `/api/members/{id}/activate` | Activate member |
 
-### BookController (`/api/books`)
+#### BookController (`/api/books`)
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `POST` | `/api/books` | Add new book to catalog |
@@ -157,7 +161,7 @@ BookStack uses **Vertical Slice Architecture (VSA)**:
 | `PUT` | `/api/books/{id}` | Update book |
 | `DELETE` | `/api/books/{id}` | Delete book |
 
-### BookCopyController (`/api/copies`)
+#### BookCopyController (`/api/copies`)
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `POST` | `/api/copies` | Add new physical copy |
@@ -167,7 +171,7 @@ BookStack uses **Vertical Slice Architecture (VSA)**:
 | `PUT` | `/api/copies/{id}` | Update copy |
 | `DELETE` | `/api/copies/{id}` | Delete copy |
 
-### VisitController (`/api/visits`)
+#### VisitController (`/api/visits`)
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `POST` | `/api/visits/checkin` | Check-in member |
@@ -176,7 +180,7 @@ BookStack uses **Vertical Slice Architecture (VSA)**:
 | `GET` | `/api/members/{memberId}/visits/active` | Get member's active visit |
 | `GET` | `/api/members/{memberId}/visits` | Get member's visit history |
 
-### LoanController (`/api/loans`)
+#### LoanController (`/api/loans`)
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `POST` | `/api/loans` | Borrow copy |
@@ -185,7 +189,7 @@ BookStack uses **Vertical Slice Architecture (VSA)**:
 | `GET` | `/api/members/{memberId}/loans/active` | Get member's active loans |
 | `GET` | `/api/members/{memberId}/loans` | Get member's loan history |
 
-### ReservationController (`/api/reservations`)
+#### ReservationController (`/api/reservations`)
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `POST` | `/api/reservations` | Create reservation |
@@ -195,7 +199,7 @@ BookStack uses **Vertical Slice Architecture (VSA)**:
 | `GET` | `/api/members/{memberId}/reservations` | Get member's reservations |
 | `GET` | `/api/books/{bookId}/reservations` | Get reservation queue for book |
 
-### PenaltyController (`/api/penalties`)
+#### PenaltyController (`/api/penalties`)
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET` | `/api/penalties` | List all penalties |
@@ -203,7 +207,7 @@ BookStack uses **Vertical Slice Architecture (VSA)**:
 | `POST` | `/api/penalties/{id}/pay` | Pay penalty |
 | `GET` | `/api/members/{memberId}/penalties` | Get member's penalties |
 
-## 🔧 Configuration
+## Configuration
 
 Key configuration in `application.yml`:
 
@@ -220,7 +224,7 @@ bookstack:
     pickup-window-days: 3           # Days to pickup reserved copy
 ```
 
-## 📐 Business Rules
+## Business Rules
 
 ### Member Rules
 - Email must be unique across all members
@@ -270,7 +274,7 @@ bookstack:
 - Pickup window: 3 days (configurable)
 - Cancelled reservations update queue positions automatically
 
-## 🐳 Docker
+## Docker
 
 ### Development (DB only)
 ```bash
@@ -292,15 +296,15 @@ docker compose logs -f app
 docker compose down
 ```
 
-## 🔄 CI/CD
+## CI/CD
 
 - **GitHub Actions**: Automated testing and coverage reporting
 - **Codecov**: Code coverage tracking
 - **Docker**: Multi-stage builds for production-ready images
 
-## 📊 Development Status
+## Development Status
 
-### ✅ Completed Features
+### Completed Features
 
 #### Infrastructure Setup
 - Spring Boot 4.0.1, Kotlin 2.2.21, PostgreSQL 16
@@ -373,7 +377,7 @@ docker compose down
   - Only reservation holder can borrow ON_HOLD copy
 - **Tests**: Full coverage including queue management
 
-### 📈 Test Coverage
+### Test Coverage
 - **193+ test scenarios** across all domains
 - **13 E2E tests** covering complete business flows
 - **Database verification** in all integration tests

@@ -5,38 +5,38 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 data class ListReservationsResponse(
-    @Schema(description = "Rezervasyon listesi")
+    @Schema(description = "List of reservations")
     val reservations: List<ReservationListItem>
 )
 
 data class ReservationListItem(
-    @Schema(description = "Rezervasyon ID'si")
+    @Schema(description = "Reservation ID")
     val id: UUID,
 
-    @Schema(description = "Üye ID'si")
+    @Schema(description = "Member ID")
     val memberId: UUID,
 
-    @Schema(description = "Üye adı soyadı")
+    @Schema(description = "Member full name")
     val memberName: String,
 
-    @Schema(description = "Üyelik numarası")
+    @Schema(description = "Membership number")
     val membershipNumber: String,
 
-    @Schema(description = "Kitap ID'si")
+    @Schema(description = "Book ID")
     val bookId: UUID,
 
-    @Schema(description = "Kitap başlığı")
+    @Schema(description = "Book title")
     val bookTitle: String,
 
-    @Schema(description = "Sıra numarası")
+    @Schema(description = "Queue position")
     val queuePosition: Int,
 
-    @Schema(description = "Rezervasyon durumu")
+    @Schema(description = "Reservation status")
     val status: String,
 
-    @Schema(description = "Son teslim alma zamanı (varsa)")
+    @Schema(description = "Pickup expiration timestamp (if any)")
     val expiresAt: LocalDateTime?,
 
-    @Schema(description = "Oluşturulma zamanı")
+    @Schema(description = "Created at timestamp")
     val createdAt: LocalDateTime
 )

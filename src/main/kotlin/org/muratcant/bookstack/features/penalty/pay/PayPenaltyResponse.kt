@@ -6,21 +6,21 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 data class PayPenaltyResponse(
-    @Schema(description = "Ceza ID'si")
+    @Schema(description = "Penalty ID")
     val id: UUID,
 
-    @Schema(description = "Üye ID'si")
+    @Schema(description = "Member ID")
     val memberId: UUID,
 
-    @Schema(description = "Üye adı soyadı")
+    @Schema(description = "Member full name")
     val memberName: String,
 
-    @Schema(description = "Ödenen tutar")
+    @Schema(description = "Paid amount")
     val amount: BigDecimal,
 
-    @Schema(description = "Ceza durumu")
+    @Schema(description = "Penalty status")
     val status: String,
 
-    @Schema(description = "Ödeme zamanı")
+    @Schema(description = "Paid at timestamp")
     val paidAt: LocalDateTime
 )

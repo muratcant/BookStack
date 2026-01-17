@@ -36,8 +36,14 @@ import kotlin.test.assertTrue
 /**
  * E2E Tests: Loan Lifecycle
  *
- * Bu test sınıfı, ödünç alma sürecinin tüm yaşam döngüsünü
- * uçtan uca test eder. Gerçek veritabanı kullanılır (Docker PostgreSQL).
+ * This test class performs end-to-end testing of the complete loan lifecycle.
+ * Uses real database (Docker PostgreSQL).
+ *
+ * Test Scenarios:
+ * 1. Complete loan lifecycle from registration to return
+ * 2. Overdue return creates penalty and payment clears it
+ * 3. Penalty above threshold blocks borrowing until paid
+ * 4. Max loan limit enforcement and recovery after return
  */
 @Transactional
 class LoanLifecycleE2ETest : BaseIntegrationTest() {
@@ -75,22 +81,22 @@ class LoanLifecycleE2ETest : BaseIntegrationTest() {
     }
 
     /**
-     * E2E Test: Tam Ödünç Alma Döngüsü
+     * E2E Test: Complete Loan Lifecycle
      *
-     * Senaryo:
-     * 1. Yeni üye kaydı oluştur (POST /api/members)
-     * 2. Kitap oluştur (POST /api/books)
-     * 3. Kopya oluştur (POST /api/copies)
-     * 4. Üye check-in yapar (POST /api/visits)
-     * 5. Üye kitabı ödünç alır (POST /api/loans)
-     * 6. Üye check-out yapar (POST /api/visits/{id}/checkout)
-     * 7. Üye tekrar check-in yapar
-     * 8. Kitabı iade eder (POST /api/loans/{id}/return)
+     * Scenario:
+     * 1. Register new member (POST /api/members)
+     * 2. Create book (POST /api/books)
+     * 3. Create copy (POST /api/copies)
+     * 4. Member checks in (POST /api/visits/checkin)
+     * 5. Member borrows book (POST /api/loans)
+     * 6. Member checks out (POST /api/visits/{id}/checkout)
+     * 7. Member checks in again
+     * 8. Return the book (POST /api/loans/{id}/return)
      *
-     * DB Doğrulamaları:
-     * - Member kaydı oluştu
-     * - Book ve Copy kaydı oluştu
-     * - Visit kaydı oluştu (check-in/check-out)
+     * DB Verifications:
+     * - Member record created
+     * - Book and Copy records created
+     * - Visit records created (check-in/check-out)
      * - Loan.status: ACTIVE → RETURNED
      * - Copy.status: AVAILABLE → LOANED → AVAILABLE
      */
@@ -260,18 +266,18 @@ class LoanLifecycleE2ETest : BaseIntegrationTest() {
     }
 
     /**
-     * E2E Test: Gecikmeli İade + Ceza Oluşturma + Ödeme
+     * E2E Test: Overdue Return + Penalty Creation + Payment
      *
-     * Senaryo:
-     * 1. Üye oluştur ve check-in yap
-     * 2. Kitap ve kopya oluştur
-     * 3. Geçmiş tarihli dueDate ile loan oluştur (DB'de direkt)
-     * 4. Kitabı iade et → Ceza otomatik oluşur
-     * 5. Cezayı öde
+     * Scenario:
+     * 1. Create member and check-in
+     * 2. Create book and copy
+     * 3. Create loan with past dueDate (directly in DB)
+     * 4. Return the book → Penalty is automatically created
+     * 5. Pay the penalty
      *
-     * DB Doğrulamaları:
+     * DB Verifications:
      * - Loan.status: ACTIVE → RETURNED
-     * - Penalty oluştu (amount = daysOverdue × 1.00)
+     * - Penalty created (amount = daysOverdue × 1.00)
      * - Penalty.status: UNPAID → PAID
      */
     @Test
@@ -358,21 +364,21 @@ class LoanLifecycleE2ETest : BaseIntegrationTest() {
     }
 
     /**
-     * E2E Test: Yüksek Ödenmemiş Ceza Ödünç Almayı Engeller
+     * E2E Test: High Unpaid Penalty Blocks Borrowing
      *
-     * Senaryo:
-     * 1. Üye oluştur
-     * 2. Üyeye yüksek tutarlı ödenmemiş ceza ekle (threshold üzeri: 15 TL > 10 TL)
-     * 3. Üye check-in yapar
-     * 4. Yeni kitap ödünç almaya çalışır
-     * 5. → 400 Bad Request (ceza engeli)
-     * 6. Cezayı öde
-     * 7. Tekrar ödünç almayı dene → Başarılı
+     * Scenario:
+     * 1. Create member
+     * 2. Add high unpaid penalty to member (above threshold: $15 > $10)
+     * 3. Member checks in
+     * 4. Try to borrow a new book
+     * 5. → 400 Bad Request (penalty blocking)
+     * 6. Pay the penalty
+     * 7. Try to borrow again → Success
      *
-     * DB Doğrulamaları:
-     * - İlk borrow denemesi başarısız
-     * - Ceza ödendikten sonra borrow başarılı
-     * - Loan kaydı sadece ikinci denemede oluşur
+     * DB Verifications:
+     * - First borrow attempt fails
+     * - Borrow succeeds after penalty payment
+     * - Loan record only created on second attempt
      */
     @Test
     fun `E2E - Penalty above threshold blocks borrowing until paid`() {
@@ -490,21 +496,21 @@ class LoanLifecycleE2ETest : BaseIntegrationTest() {
     }
 
     /**
-     * E2E Test: Maksimum Aktif Ödünç Limiti
+     * E2E Test: Maximum Active Loan Limit
      *
-     * Senaryo:
-     * 1. Üye oluştur (maxActiveLoans = 5)
-     * 2. Üye check-in yapar
-     * 3. 5 kitap ödünç alır (limit dolar)
-     * 4. 6. kitabı almaya çalışır → 400 Bad Request
-     * 5. 1 kitap iade eder
-     * 6. 6. kitabı tekrar almaya çalışır → Başarılı
+     * Scenario:
+     * 1. Create member (maxActiveLoans = 5)
+     * 2. Member checks in
+     * 3. Borrow 5 books (limit reached)
+     * 4. Try to borrow 6th book → 400 Bad Request
+     * 5. Return 1 book
+     * 6. Try to borrow 6th book again → Success
      *
-     * DB Doğrulamaları:
-     * - Her ödünç almada loan sayısı artar
-     * - 5. ödünçten sonra 6. başarısız
-     * - İade sonrası loan sayısı düşer
-     * - 6. ödünç başarılı olur
+     * DB Verifications:
+     * - Loan count increases with each borrow
+     * - 6th borrow fails after 5 active loans
+     * - Loan count decreases after return
+     * - 6th borrow succeeds after return
      */
     @Test
     fun `E2E - Max loan limit enforcement and recovery after return`() {

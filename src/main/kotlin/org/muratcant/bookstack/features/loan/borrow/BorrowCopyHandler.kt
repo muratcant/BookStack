@@ -39,25 +39,20 @@ class BorrowCopyHandler(
         val copy = bookCopyRepository.findById(request.copyId)
             .orElseThrow { ResourceNotFoundException("Book copy not found: ${request.copyId}") }
 
-        // Business Rule: Member must be ACTIVE
         if (!member.isActive()) {
             throw MemberNotActiveException("Member is not active: ${member.status}")
         }
 
-        // Business Rule: Member must be checked in
         if (!visitRepository.existsByMemberIdAndCheckOutTimeIsNull(request.memberId)) {
             throw MemberNotCheckedInException("Member must be checked in to borrow a copy")
         }
 
-        // Business Rule: Member must not have unpaid penalties above threshold
         val unpaidAmount = penaltyRepository.sumUnpaidAmountByMemberId(request.memberId)
         if (unpaidAmount >= penaltyProperties.blockingThreshold) {
             throw UnpaidPenaltiesException("Member has unpaid penalties ($unpaidAmount) above blocking threshold (${penaltyProperties.blockingThreshold})")
         }
 
-        // Business Rule: Copy must be AVAILABLE or ON_HOLD (for reservation holder)
         if (copy.status == CopyStatus.ON_HOLD) {
-            // Check if this member is the reservation holder
             val reservation = reservationRepository.findByCopyIdAndStatus(
                 request.copyId, ReservationStatus.READY_FOR_PICKUP
             )
@@ -68,18 +63,15 @@ class BorrowCopyHandler(
             throw CopyNotAvailableException("Copy is not available: ${copy.status}")
         }
 
-        // Business Rule: Copy must be BORROWABLE or BOTH
         if (copy.usageType == UsageType.READING_ROOM_ONLY) {
             throw CopyNotBorrowableException("Copy is for reading room only")
         }
 
-        // Business Rule: Member must not exceed max active loans
         val activeLoansCount = loanRepository.countByMemberIdAndStatus(request.memberId, LoanStatus.ACTIVE)
         if (activeLoansCount >= member.maxActiveLoans) {
             throw MaxLoansExceededException("Member has reached maximum active loans limit: ${member.maxActiveLoans}")
         }
 
-        // Create loan
         val dueDate = LocalDateTime.now().plusDays(loanProperties.defaultDurationDays.toLong())
         val loan = Loan(
             member = member,
@@ -87,13 +79,11 @@ class BorrowCopyHandler(
             dueDate = dueDate
         )
 
-        // Update copy status
         copy.status = CopyStatus.LOANED
 
         val savedLoan = loanRepository.save(loan)
         bookCopyRepository.save(copy)
 
-        // Fulfill reservation if this was an ON_HOLD copy
         processReservationService.fulfillReservation(request.copyId)
 
         return savedLoan.toResponse()

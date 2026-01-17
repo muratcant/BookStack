@@ -33,9 +33,15 @@ import kotlin.test.assertTrue
 /**
  * E2E Tests: Member Restrictions
  *
- * Bu test sınıfı, üye durumu ve kopya türüne göre uygulanan
- * kısıtlamaları uçtan uca test eder. Suspended üye, reading room
- * only kopya ve concurrent visit senaryolarını kapsar.
+ * This test class performs end-to-end testing of restrictions based on
+ * member status and copy usage type. Uses real database (Docker PostgreSQL).
+ *
+ * Test Scenarios:
+ * 1. Suspended member is blocked from all operations until reactivated
+ * 2. Reading room only copy cannot be borrowed but borrowable can
+ * 3. Concurrent check-in is prevented for same member
+ * 4. Borrowing requires active check-in
+ * 5. BOTH usage type copy can be borrowed
  */
 @Transactional
 class MemberRestrictionsE2ETest : BaseIntegrationTest() {
@@ -73,20 +79,20 @@ class MemberRestrictionsE2ETest : BaseIntegrationTest() {
     }
 
     /**
-     * E2E Test: Suspended Üye Tüm İşlemlerden Engellenir
+     * E2E Test: Suspended Member Blocked from All Operations
      *
-     * Senaryo:
-     * 1. Aktif üye oluştur
-     * 2. Üyeyi suspend et
-     * 3. Check-in denemesi → 400 Bad Request
-     * 4. Ödünç alma denemesi (DB'de check-in olmadan) → 400 Bad Request
-     * 5. Rezervasyon denemesi → 400 Bad Request
-     * 6. Üyeyi tekrar aktif et
-     * 7. Check-in yapabilir → 201 Created
+     * Scenario:
+     * 1. Create active member
+     * 2. Suspend the member
+     * 3. Check-in attempt → 400 Bad Request
+     * 4. Borrow attempt (force check-in in DB) → 400 Bad Request
+     * 5. Reservation attempt → 400 Bad Request
+     * 6. Reactivate the member
+     * 7. Check-in succeeds → 201 Created
      *
-     * DB Doğrulamaları:
-     * - Suspended iken hiçbir işlem yapılamaz
-     * - Aktif edildikten sonra işlemler başarılı
+     * DB Verifications:
+     * - No operations allowed while suspended
+     * - Operations succeed after reactivation
      */
     @Test
     fun `E2E - Suspended member is blocked from all operations until reactivated`() {
@@ -214,18 +220,18 @@ class MemberRestrictionsE2ETest : BaseIntegrationTest() {
     }
 
     /**
-     * E2E Test: Reading Room Only Kopya Ödünç Alınamaz
+     * E2E Test: Reading Room Only Copy Cannot Be Borrowed
      *
-     * Senaryo:
-     * 1. Üye oluştur ve check-in yap
-     * 2. Kitap ve READING_ROOM_ONLY kopya oluştur
-     * 3. Ödünç almaya çalış → 400 Bad Request
-     * 4. BORROWABLE kopya oluştur
-     * 5. BORROWABLE kopyayı ödünç al → Başarılı
+     * Scenario:
+     * 1. Create member and check-in
+     * 2. Create book and READING_ROOM_ONLY copy
+     * 3. Try to borrow → 400 Bad Request
+     * 4. Create BORROWABLE copy
+     * 5. Borrow BORROWABLE copy → Success
      *
-     * DB Doğrulamaları:
-     * - READING_ROOM_ONLY kopya ödünç alınamaz
-     * - BORROWABLE kopya ödünç alınabilir
+     * DB Verifications:
+     * - READING_ROOM_ONLY copy cannot be borrowed
+     * - BORROWABLE copy can be borrowed
      */
     @Test
     fun `E2E - Reading room only copy cannot be borrowed but borrowable can`() {
@@ -307,18 +313,18 @@ class MemberRestrictionsE2ETest : BaseIntegrationTest() {
     }
 
     /**
-     * E2E Test: Aynı Anda İki Kez Check-In Engeli
+     * E2E Test: Concurrent Check-In Prevention
      *
-     * Senaryo:
-     * 1. Üye oluştur
-     * 2. Check-in yap (aktif ziyaret başlar)
-     * 3. Tekrar check-in yapmaya çalış → 400 Bad Request
-     * 4. Check-out yap
-     * 5. Tekrar check-in yap → Başarılı
+     * Scenario:
+     * 1. Create member
+     * 2. Check-in (active visit starts)
+     * 3. Try to check-in again → 400 Bad Request
+     * 4. Check-out
+     * 5. Check-in again → Success
      *
-     * DB Doğrulamaları:
-     * - Aynı anda sadece 1 aktif ziyaret olabilir
-     * - Check-out sonrası yeni ziyaret başlatılabilir
+     * DB Verifications:
+     * - Only 1 active visit allowed at a time
+     * - New visit can start after check-out
      */
     @Test
     fun `E2E - Concurrent check-in is prevented for same member`() {
@@ -387,18 +393,18 @@ class MemberRestrictionsE2ETest : BaseIntegrationTest() {
     }
 
     /**
-     * E2E Test: Check-In Olmadan Ödünç Alma Engeli
+     * E2E Test: Borrowing Requires Check-In
      *
-     * Senaryo:
-     * 1. Üye oluştur (check-in yapmadan)
-     * 2. Kitap ve kopya oluştur
-     * 3. Ödünç almaya çalış → 400 Bad Request (check-in gerekli)
-     * 4. Check-in yap
-     * 5. Ödünç al → Başarılı
+     * Scenario:
+     * 1. Create member (without check-in)
+     * 2. Create book and copy
+     * 3. Try to borrow → 400 Bad Request (check-in required)
+     * 4. Check-in
+     * 5. Borrow → Success
      *
-     * DB Doğrulamaları:
-     * - Check-in olmadan ödünç alınamaz
-     * - Check-in sonrası ödünç alınabilir
+     * DB Verifications:
+     * - Cannot borrow without check-in
+     * - Can borrow after check-in
      */
     @Test
     fun `E2E - Borrowing requires active check-in`() {
@@ -466,15 +472,15 @@ class MemberRestrictionsE2ETest : BaseIntegrationTest() {
     }
 
     /**
-     * E2E Test: BOTH UsageType Kopya Hem Ödünç Alınabilir Hem Okuma Salonunda Kullanılabilir
+     * E2E Test: BOTH Usage Type Copy Can Be Borrowed
      *
-     * Senaryo:
-     * 1. Üye oluştur ve check-in yap
-     * 2. BOTH tipinde kopya oluştur
-     * 3. Ödünç al → Başarılı (BORROWABLE gibi davranır)
+     * Scenario:
+     * 1. Create member and check-in
+     * 2. Create BOTH type copy
+     * 3. Borrow → Success (behaves like BORROWABLE)
      *
-     * DB Doğrulamaları:
-     * - BOTH tipindeki kopya ödünç alınabilir
+     * DB Verifications:
+     * - BOTH type copy can be borrowed
      */
     @Test
     fun `E2E - BOTH usage type copy can be borrowed`() {

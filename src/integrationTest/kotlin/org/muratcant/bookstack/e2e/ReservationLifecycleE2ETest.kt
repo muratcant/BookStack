@@ -36,9 +36,15 @@ import kotlin.test.assertNull
 /**
  * E2E Tests: Reservation Lifecycle
  *
- * Bu test sınıfı, rezervasyon sisteminin tüm yaşam döngüsünü
- * uçtan uca test eder. FIFO kuyruğu, ON_HOLD durumu ve
- * rezervasyon sahibi kontrollerini kapsar.
+ * This test class performs end-to-end testing of the complete reservation
+ * lifecycle. Covers FIFO queue, ON_HOLD status, and reservation holder checks.
+ * Uses real database (Docker PostgreSQL).
+ *
+ * Test Scenarios:
+ * 1. Complete reservation cycle from creation to fulfillment
+ * 2. Non-holder cannot borrow ON_HOLD copy reserved for another member
+ * 3. FIFO queue position updates correctly after cancellations
+ * 4. Duplicate reservation for same book by same member is prevented
  */
 @Transactional
 class ReservationLifecycleE2ETest : BaseIntegrationTest() {
@@ -76,24 +82,24 @@ class ReservationLifecycleE2ETest : BaseIntegrationTest() {
     }
 
     /**
-     * E2E Test: Tam Rezervasyon Döngüsü - Rezervasyondan Teslim Almaya
+     * E2E Test: Complete Reservation Cycle - From Creation to Pickup
      *
-     * Senaryo:
-     * 1. 2 üye oluştur (Borrower ve Reserver)
-     * 2. Kitap ve kopya oluştur
-     * 3. Borrower kitabı ödünç alır (kopya LOANED olur)
-     * 4. Reserver aynı kitap için rezervasyon yapar (WAITING)
-     * 5. Borrower kitabı iade eder
-     *    → Kopya otomatik olarak ON_HOLD olur
-     *    → Rezervasyon READY_FOR_PICKUP olur
-     * 6. Reserver check-in yapar
-     * 7. Reserver ON_HOLD kopyayı ödünç alır
-     *    → Rezervasyon FULFILLED olur
+     * Scenario:
+     * 1. Create 2 members (Borrower and Reserver)
+     * 2. Create book and copy
+     * 3. Borrower borrows the book (copy becomes LOANED)
+     * 4. Reserver creates reservation for same book (WAITING)
+     * 5. Borrower returns the book
+     *    → Copy automatically becomes ON_HOLD
+     *    → Reservation becomes READY_FOR_PICKUP
+     * 6. Reserver checks in
+     * 7. Reserver borrows the ON_HOLD copy
+     *    → Reservation becomes FULFILLED
      *
-     * DB Doğrulamaları:
+     * DB Verifications:
      * - Reservation.status: WAITING → READY_FOR_PICKUP → FULFILLED
      * - Copy.status: AVAILABLE → LOANED → ON_HOLD → LOANED
-     * - İade sonrası copy, rezervasyon sahibine atanır
+     * - After return, copy is assigned to reservation holder
      */
     @Test
     fun `E2E - Complete reservation cycle from creation to fulfillment`() {
@@ -228,21 +234,21 @@ class ReservationLifecycleE2ETest : BaseIntegrationTest() {
     }
 
     /**
-     * E2E Test: Rezervasyon Sahibi Olmayan Üye ON_HOLD Kopyayı Alamaz
+     * E2E Test: Non-Holder Cannot Borrow ON_HOLD Copy
      *
-     * Senaryo:
-     * 1. 3 üye oluştur (Borrower, Reserver, Intruder)
-     * 2. Kitap ve kopya oluştur
-     * 3. Borrower kitabı ödünç alır
-     * 4. Reserver rezervasyon yapar
-     * 5. Borrower iade eder → Kopya ON_HOLD, Reserver'a atandı
-     * 6. Intruder check-in yapar ve ON_HOLD kopyayı almaya çalışır
-     *    → 400 Bad Request (başkasının rezervasyonu)
-     * 7. Reserver check-in yapar ve kopyayı alır → Başarılı
+     * Scenario:
+     * 1. Create 3 members (Borrower, Reserver, Intruder)
+     * 2. Create book and copy
+     * 3. Borrower borrows the book
+     * 4. Reserver creates reservation
+     * 5. Borrower returns → Copy ON_HOLD, assigned to Reserver
+     * 6. Intruder checks in and tries to borrow ON_HOLD copy
+     *    → 400 Bad Request (another member's reservation)
+     * 7. Reserver checks in and borrows → Success
      *
-     * DB Doğrulamaları:
-     * - Intruder'ın borrow denemesi başarısız
-     * - Sadece Reserver borrow edebilir
+     * DB Verifications:
+     * - Intruder's borrow attempt fails
+     * - Only Reserver can borrow
      */
     @Test
     fun `E2E - Non-holder cannot borrow ON_HOLD copy reserved for another member`() {
@@ -366,22 +372,22 @@ class ReservationLifecycleE2ETest : BaseIntegrationTest() {
     }
 
     /**
-     * E2E Test: FIFO Kuyruk Sırası ve İptal Sonrası Güncelleme
+     * E2E Test: FIFO Queue Order and Update After Cancellation
      *
-     * Senaryo:
-     * 1. 4 üye oluştur (Member1, Member2, Member3, Member4)
-     * 2. Kitap oluştur (tüm kopyaları ödünç alınmış varsayalım)
-     * 3. 4 üye sırasıyla rezervasyon yapar
-     *    → Kuyruk: M1(1), M2(2), M3(3), M4(4)
-     * 4. Member2 rezervasyonunu iptal eder
-     *    → Kuyruk: M1(1), M3(2), M4(3)
-     * 5. Member1 rezervasyonunu iptal eder
-     *    → Kuyruk: M3(1), M4(2)
-     * 6. Kuyruk sırasını doğrula
+     * Scenario:
+     * 1. Create 4 members (Member1, Member2, Member3, Member4)
+     * 2. Create book (assume all copies are borrowed)
+     * 3. 4 members create reservations in order
+     *    → Queue: M1(1), M2(2), M3(3), M4(4)
+     * 4. Member2 cancels reservation
+     *    → Queue: M1(1), M3(2), M4(3)
+     * 5. Member1 cancels reservation
+     *    → Queue: M3(1), M4(2)
+     * 6. Verify queue order
      *
-     * DB Doğrulamaları:
-     * - İptal sonrası queue position'lar güncellenir
-     * - FIFO sırası korunur
+     * DB Verifications:
+     * - Queue positions updated after cancellation
+     * - FIFO order is preserved
      */
     @Test
     fun `E2E - FIFO queue position updates correctly after cancellations`() {
@@ -476,17 +482,17 @@ class ReservationLifecycleE2ETest : BaseIntegrationTest() {
     }
 
     /**
-     * E2E Test: Aynı Kitap İçin Tekrar Rezervasyon Engeli
+     * E2E Test: Duplicate Reservation Prevention
      *
-     * Senaryo:
-     * 1. Üye oluştur
-     * 2. Kitap oluştur
-     * 3. Üye rezervasyon yapar (WAITING)
-     * 4. Aynı üye aynı kitap için tekrar rezervasyon yapmaya çalışır
+     * Scenario:
+     * 1. Create member
+     * 2. Create book
+     * 3. Member creates reservation (WAITING)
+     * 4. Same member tries to create another reservation for the same book
      *    → 400 Bad Request (duplicate)
      *
-     * DB Doğrulamaları:
-     * - Sadece 1 aktif rezervasyon var
+     * DB Verifications:
+     * - Only 1 active reservation exists
      */
     @Test
     fun `E2E - Duplicate reservation for same book by same member is prevented`() {

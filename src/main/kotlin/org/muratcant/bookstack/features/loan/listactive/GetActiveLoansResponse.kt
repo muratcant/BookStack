@@ -5,32 +5,32 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 data class GetActiveLoansResponse(
-    @Schema(description = "Aktif ödünç listesi")
+    @Schema(description = "List of active loans")
     val loans: List<ActiveLoanItem>
 )
 
 data class ActiveLoanItem(
-    @Schema(description = "Ödünç ID'si")
+    @Schema(description = "Loan ID")
     val id: UUID,
 
-    @Schema(description = "Kopya ID'si")
+    @Schema(description = "Copy ID")
     val copyId: UUID,
 
-    @Schema(description = "Kitap başlığı")
+    @Schema(description = "Book title")
     val bookTitle: String,
 
-    @Schema(description = "Kitap ISBN")
+    @Schema(description = "Book ISBN")
     val bookIsbn: String,
 
-    @Schema(description = "Kopya barkodu")
+    @Schema(description = "Copy barcode")
     val barcode: String,
 
-    @Schema(description = "Ödünç alınma zamanı")
+    @Schema(description = "Borrowed at timestamp")
     val borrowedAt: LocalDateTime,
 
-    @Schema(description = "İade tarihi")
+    @Schema(description = "Due date")
     val dueDate: LocalDateTime,
 
-    @Schema(description = "Gecikmiş mi?")
+    @Schema(description = "Whether the loan is overdue")
     val isOverdue: Boolean
 )

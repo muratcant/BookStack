@@ -5,45 +5,45 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 data class GetLoanResponse(
-    @Schema(description = "Ödünç ID'si")
+    @Schema(description = "Loan ID")
     val id: UUID,
 
-    @Schema(description = "Üye ID'si")
+    @Schema(description = "Member ID")
     val memberId: UUID,
 
-    @Schema(description = "Üye adı soyadı")
+    @Schema(description = "Member full name")
     val memberName: String,
 
-    @Schema(description = "Üyelik numarası")
+    @Schema(description = "Membership number")
     val membershipNumber: String,
 
-    @Schema(description = "Kopya ID'si")
+    @Schema(description = "Copy ID")
     val copyId: UUID,
 
-    @Schema(description = "Kitap ID'si")
+    @Schema(description = "Book ID")
     val bookId: UUID,
 
-    @Schema(description = "Kitap başlığı")
+    @Schema(description = "Book title")
     val bookTitle: String,
 
-    @Schema(description = "Kitap ISBN")
+    @Schema(description = "Book ISBN")
     val bookIsbn: String,
 
-    @Schema(description = "Kopya barkodu")
+    @Schema(description = "Copy barcode")
     val barcode: String,
 
-    @Schema(description = "Ödünç alınma zamanı")
+    @Schema(description = "Borrowed at timestamp")
     val borrowedAt: LocalDateTime,
 
-    @Schema(description = "İade tarihi")
+    @Schema(description = "Due date")
     val dueDate: LocalDateTime,
 
-    @Schema(description = "İade edilme zamanı (null ise henüz iade edilmemiş)")
+    @Schema(description = "Returned at timestamp (null if not yet returned)")
     val returnedAt: LocalDateTime?,
 
-    @Schema(description = "Ödünç durumu")
+    @Schema(description = "Loan status")
     val status: String,
 
-    @Schema(description = "Gecikmiş mi?")
+    @Schema(description = "Whether the loan is overdue")
     val isOverdue: Boolean
 )

@@ -1,5 +1,7 @@
 package org.muratcant.bookstack.features.book.add
 
+import com.fasterxml.jackson.annotation.JsonSetter
+import com.fasterxml.jackson.annotation.Nulls
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
@@ -14,9 +16,11 @@ data class AddBookRequest(
     @Schema(description = "Book title", example = "Clean Code")
     val title: String,
 
+    @JsonSetter(nulls = Nulls.AS_EMPTY)
     @Schema(description = "List of authors", example = "[\"Robert C. Martin\"]")
     val authors: List<String> = emptyList(),
 
+    @JsonSetter(nulls = Nulls.AS_EMPTY)
     @Schema(description = "List of categories", example = "[\"Programming\", \"Software Engineering\"]")
     val categories: List<String> = emptyList(),
 

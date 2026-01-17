@@ -5,18 +5,18 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 data class CheckOutResponse(
-    @Schema(description = "Ziyaret ID'si")
+    @Schema(description = "Visit ID")
     val id: UUID,
 
-    @Schema(description = "Üye ID'si")
+    @Schema(description = "Member ID")
     val memberId: UUID,
 
-    @Schema(description = "Üye adı soyadı")
+    @Schema(description = "Member full name")
     val memberName: String,
 
-    @Schema(description = "Check-in zamanı")
+    @Schema(description = "Check-in time")
     val checkInTime: LocalDateTime,
 
-    @Schema(description = "Check-out zamanı")
+    @Schema(description = "Check-out time")
     val checkOutTime: LocalDateTime
 )

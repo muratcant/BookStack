@@ -6,10 +6,10 @@ import java.util.UUID
 
 data class BorrowCopyRequest(
     @field:NotNull(message = "Member ID is required")
-    @Schema(description = "Ödünç alan üyenin ID'si", example = "123e4567-e89b-12d3-a456-426614174000")
+    @Schema(description = "ID of the member borrowing the copy", example = "123e4567-e89b-12d3-a456-426614174000")
     val memberId: UUID,
 
     @field:NotNull(message = "Copy ID is required")
-    @Schema(description = "Ödünç alınacak kopyanın ID'si", example = "123e4567-e89b-12d3-a456-426614174000")
+    @Schema(description = "ID of the copy to borrow", example = "123e4567-e89b-12d3-a456-426614174000")
     val copyId: UUID
 )

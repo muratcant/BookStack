@@ -6,10 +6,10 @@ import java.util.UUID
 
 data class CreateReservationRequest(
     @field:NotNull(message = "Member ID is required")
-    @Schema(description = "Rezervasyon yapan üye ID'si")
+    @Schema(description = "ID of the member making the reservation")
     val memberId: UUID,
 
     @field:NotNull(message = "Book ID is required")
-    @Schema(description = "Rezerve edilecek kitap ID'si")
+    @Schema(description = "ID of the book to reserve")
     val bookId: UUID
 )

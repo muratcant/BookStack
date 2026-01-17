@@ -6,38 +6,38 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 data class GetPenaltiesByMemberResponse(
-    @Schema(description = "Toplam ödenmemiş ceza tutarı")
+    @Schema(description = "Total unpaid penalty amount")
     val totalUnpaidAmount: BigDecimal,
 
-    @Schema(description = "Ceza listesi")
+    @Schema(description = "List of penalties")
     val penalties: List<PenaltyItem>
 )
 
 data class PenaltyItem(
-    @Schema(description = "Ceza ID'si")
+    @Schema(description = "Penalty ID")
     val id: UUID,
 
-    @Schema(description = "Ödünç ID'si")
+    @Schema(description = "Loan ID")
     val loanId: UUID,
 
-    @Schema(description = "Kitap başlığı")
+    @Schema(description = "Book title")
     val bookTitle: String,
 
-    @Schema(description = "Kopya barkodu")
+    @Schema(description = "Copy barcode")
     val barcode: String,
 
-    @Schema(description = "Ceza tutarı")
+    @Schema(description = "Penalty amount")
     val amount: BigDecimal,
 
-    @Schema(description = "Gecikme gün sayısı")
+    @Schema(description = "Number of days overdue")
     val daysOverdue: Int,
 
-    @Schema(description = "Ceza durumu")
+    @Schema(description = "Penalty status")
     val status: String,
 
-    @Schema(description = "Ödeme zamanı")
+    @Schema(description = "Paid at timestamp")
     val paidAt: LocalDateTime?,
 
-    @Schema(description = "Oluşturulma zamanı")
+    @Schema(description = "Created at timestamp")
     val createdAt: LocalDateTime
 )

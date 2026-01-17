@@ -6,6 +6,6 @@ import java.util.UUID
 
 data class CheckInRequest(
     @field:NotNull(message = "Member ID is required")
-    @Schema(description = "Check-in yapacak üyenin ID'si", example = "123e4567-e89b-12d3-a456-426614174000")
+    @Schema(description = "ID of the member checking in", example = "123e4567-e89b-12d3-a456-426614174000")
     val memberId: UUID
 )
