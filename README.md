@@ -28,27 +28,173 @@ BookStack is a backend system that combines bookstore and reading library functi
 
 ### Prerequisites
 
-- JDK 21+
-- Docker & Docker Compose
-- Gradle 9.x
+Before you begin, ensure you have the following installed on your machine:
 
-### Local Development
+| Requirement | Version | Check Command |
+|-------------|---------|---------------|
+| JDK | 21+ | `java -version` |
+| Docker | 20.10+ | `docker --version` |
+| Docker Compose | 2.0+ | `docker compose version` |
+| Git | 2.0+ | `git --version` |
 
-1. **Start PostgreSQL:**
+> **Note:** Gradle wrapper is included in the project, so you don't need to install Gradle separately.
+
+### Quick Start
+
+There are two ways to run BookStack:
+- **Option A:** Docker only (recommended for quick testing)
+- **Option B:** Local development (recommended for development)
+
+#### 1. Clone the Repository
+
+```bash
+git clone https://github.com/muratcant/BookStack.git
+cd BookStack
+```
+
+---
+
+### Option A: Run with Docker (One Command)
+
+Run the entire stack (application + database) with a single command:
+
+```bash
+docker compose up -d --build
+```
+
+This will:
+- Build the application Docker image
+- Start PostgreSQL database
+- Start the BookStack application
+- Application will be available at http://localhost:8080
+
+**View logs:**
+```bash
+docker compose logs -f app
+```
+
+**Stop everything:**
+```bash
+docker compose down
+
+# Stop and remove data (fresh start):
+docker compose down -v
+```
+
+---
+
+### Option B: Local Development
+
+#### 2. Start the Database
+
+Start PostgreSQL using Docker Compose:
+
 ```bash
 docker compose -f docker-compose.dev.yml up -d
 ```
 
-2. **Run the application:**
+Verify the database is running:
+
 ```bash
-./gradlew bootRun
+docker ps
+# Should show: bookstack-db container running on port 5432
 ```
 
-3. **Access the API:**
-- Root (redirects to Swagger): http://localhost:8080/
-- Swagger UI: http://localhost:8080/swagger-ui.html
-- API Docs: http://localhost:8080/api-docs
-- Health: http://localhost:8080/actuator/health
+#### 3. Run the Application
+
+```bash
+# Linux/macOS
+./gradlew bootRun
+
+# Windows
+gradlew.bat bootRun
+```
+
+Wait for the application to start. You should see:
+
+```
+Started BookStackApplicationKt in X.XXX seconds
+```
+
+#### 4. Verify Installation
+
+Open your browser and navigate to:
+
+| URL | Description |
+|-----|-------------|
+| http://localhost:8080/ | Redirects to Swagger UI |
+| http://localhost:8080/swagger-ui.html | Interactive API documentation |
+| http://localhost:8080/api-docs | OpenAPI JSON specification |
+| http://localhost:8080/actuator/health | Health check endpoint |
+
+### Database Configuration
+
+The application uses PostgreSQL with the following default configuration:
+
+| Property | Value |
+|----------|-------|
+| Host | localhost |
+| Port | 5432 |
+| Database | bookstack |
+| Username | bookstack |
+| Password | bookstack123 |
+
+These values are configured in `docker-compose.dev.yml` and `src/main/resources/application.yml`.
+
+### Stopping the Application
+
+1. **Stop the Spring Boot application:** Press `Ctrl+C` in the terminal
+
+2. **Stop the database:**
+```bash
+docker compose -f docker-compose.dev.yml down
+```
+
+3. **Stop and remove data volumes (fresh start):**
+```bash
+docker compose -f docker-compose.dev.yml down -v
+```
+
+### Troubleshooting
+
+#### Port 5432 is already in use
+
+If you have another PostgreSQL instance running:
+
+```bash
+# Check what's using port 5432
+lsof -i :5432
+
+# Stop local PostgreSQL (macOS)
+brew services stop postgresql
+
+# Or use a different port in docker-compose.dev.yml
+```
+
+#### Database connection refused
+
+Ensure the database container is running and healthy:
+
+```bash
+docker compose -f docker-compose.dev.yml ps
+docker compose -f docker-compose.dev.yml logs db
+```
+
+#### Gradle build fails
+
+Try clearing the Gradle cache:
+
+```bash
+./gradlew clean build --refresh-dependencies
+```
+
+#### Permission denied on gradlew
+
+Make the Gradle wrapper executable:
+
+```bash
+chmod +x gradlew
+```
 
 ## Testing
 
@@ -133,6 +279,91 @@ BookStack uses **Vertical Slice Architecture (VSA)**:
 - Slices contain their own Controller, Handler, Request/Response DTOs
 - Shared concerns are in the `shared` package
 - No traditional layered architecture (no service/repository layers spanning features)
+
+## Entity Relationship Diagram
+
+```mermaid
+erDiagram
+    Member ||--o{ Visit : has
+    Member ||--o{ Loan : borrows
+    Member ||--o{ Penalty : owes
+    Member ||--o{ Reservation : makes
+
+    Book ||--o{ BookCopy : has
+    Book ||--o{ Reservation : reserved_for
+
+    BookCopy ||--o{ Loan : loaned_in
+    BookCopy ||--o| Reservation : assigned_to
+
+    Loan ||--o| Penalty : generates
+
+    Member {
+        UUID id PK
+        string membershipNumber UK
+        string firstName
+        string lastName
+        string email UK
+        string phone
+        enum status
+        int maxActiveLoans
+    }
+
+    Book {
+        UUID id PK
+        string isbn UK
+        string title
+        list authors
+        list categories
+        string description
+        int publishedYear
+    }
+
+    BookCopy {
+        UUID id PK
+        UUID bookId FK
+        string barcode UK
+        enum usageType
+        enum status
+    }
+
+    Visit {
+        UUID id PK
+        UUID memberId FK
+        datetime checkInTime
+        datetime checkOutTime
+    }
+
+    Loan {
+        UUID id PK
+        UUID memberId FK
+        UUID copyId FK
+        datetime borrowedAt
+        datetime dueDate
+        datetime returnedAt
+        enum status
+    }
+
+    Penalty {
+        UUID id PK
+        UUID memberId FK
+        UUID loanId FK
+        decimal amount
+        int daysOverdue
+        enum status
+        datetime paidAt
+    }
+
+    Reservation {
+        UUID id PK
+        UUID memberId FK
+        UUID bookId FK
+        UUID copyId FK
+        int queuePosition
+        enum status
+        datetime notifiedAt
+        datetime expiresAt
+    }
+```
 
 ## API Documentation
 
